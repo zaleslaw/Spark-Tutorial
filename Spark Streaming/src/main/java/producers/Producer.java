@@ -9,6 +9,7 @@ import java.util.Properties;
 public class Producer {
     public static void main(String[] args) {
 
+
         String topicName = "messages";
 
         Properties props = new Properties();
@@ -27,6 +28,7 @@ public class Producer {
         }
 
         producer.close();
+
 
     }
 
