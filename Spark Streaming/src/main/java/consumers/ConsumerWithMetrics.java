@@ -7,7 +7,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import java.util.Arrays;
 import java.util.Properties;
 
-public class Consumer {
+public class ConsumerWithMetrics {
     public static void main(String[] args) {
 
 
@@ -26,8 +26,12 @@ public class Consumer {
 
         while (true) {
             ConsumerRecords<String, String> records = consumer.poll(100);
+            if (!records.isEmpty()) {
+                consumer.metrics().forEach((k, v) -> System.out.println(k + " " + v.value()));
+            }
             records.forEach(e ->
                     System.out.println("Offset " + e.offset() + " key= " + e.key() + " value= " + e.value()));
+
         }
 
     }
