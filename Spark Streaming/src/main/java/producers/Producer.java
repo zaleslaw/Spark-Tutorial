@@ -20,10 +20,11 @@ public class Producer {
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
 
-        KafkaProducer<String, String> producer = new KafkaProducer<String, String>(props);
+        KafkaProducer<String, String> producer = new KafkaProducer<>(props);
 
         for (int i = 0; i < 100; i++) {
-            producer.send(new ProducerRecord<String, String>(topicName, Integer.toString(i), Integer.toString(i)));
+            producer.send(new ProducerRecord<>(topicName, Integer.toString(i),
+                    Integer.toString(i)));
 
         }
 

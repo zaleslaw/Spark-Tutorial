@@ -12,7 +12,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class MultithreadingProducer {
     public static void main(String[] args) {
-
         String topicName = "messages";
 
         Properties props = new Properties();
@@ -24,6 +23,7 @@ public class MultithreadingProducer {
 
         Producer<String, String> producer = new KafkaProducer<>(props);
 
+
         AtomicInteger counter = new AtomicInteger(0);
 
         ScheduledExecutorService service = Executors.newScheduledThreadPool(20);
@@ -31,16 +31,21 @@ public class MultithreadingProducer {
         Runnable lambda = () -> {
             String result = String.valueOf(counter.getAndIncrement());
             try {
-                producer.send(new ProducerRecord<String, String>(topicName,
-                        String.valueOf(ThreadLocalRandom.current().nextInt(10)), result));
+                producer.send(new ProducerRecord<>(
+                        topicName,
+                        String.valueOf(ThreadLocalRandom.current().nextInt(10)),
+                        result));
 
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
         };
-        ScheduledFuture scheduledTask = service.scheduleAtFixedRate(lambda, 0, 1, TimeUnit.MILLISECONDS);
 
-        service.schedule((Runnable) () -> scheduledTask.cancel(true), 6000, SECONDS);
+        ScheduledFuture scheduledTask = service
+                .scheduleAtFixedRate(lambda, 0, 1, TimeUnit.MILLISECONDS);
+
+        service.schedule((Runnable) () -> scheduledTask
+                .cancel(true), 6000, SECONDS);
         while (!scheduledTask.isCancelled()) {
 
         }
@@ -50,6 +55,5 @@ public class MultithreadingProducer {
             e.printStackTrace();
         }
         service.shutdown();
-
     }
 }
