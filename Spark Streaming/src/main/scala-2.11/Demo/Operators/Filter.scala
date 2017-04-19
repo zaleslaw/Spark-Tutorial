@@ -4,7 +4,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.ProcessingTime
 
 
-object Filter_and_Join {
+object Filter {
   def main(args: Array[String]): Unit = {
 
 
@@ -24,14 +24,9 @@ object Filter_and_Join {
 
     import spark.implicits._
 
-    val dictionary = Seq(Country("1", "Russia"), Country("2", "Germany"), Country("3", "USA")).toDS()
-
     val result = stream.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
       .as[(String, String)]
       .where("value % 10 == 0")
-      .join(dictionary, "key")
-      .select($"value".alias("key"), $"country".alias("value"))
-
 
     val writer = result.writeStream
       .trigger(ProcessingTime(3000))
@@ -43,7 +38,6 @@ object Filter_and_Join {
 
   }
 
-  case class Country(key: String, country: String)
 
 }
 

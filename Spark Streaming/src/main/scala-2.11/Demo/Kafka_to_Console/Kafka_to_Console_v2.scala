@@ -1,10 +1,10 @@
-package Demo
+package Demo.Kafka_to_Console
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.ProcessingTime
 
 
-object Kafka_to_Console {
+object Kafka_to_Console_v2 {
   def main(args: Array[String]): Unit = {
 
 
@@ -19,7 +19,7 @@ object Kafka_to_Console {
       .readStream
       .format("kafka")
       .option("kafka.bootstrap.servers", "localhost:9092")
-      .option("subscribe", "secondaryMessages")
+      .option("subscribe", "messages")
       .load()
 
     import spark.implicits._

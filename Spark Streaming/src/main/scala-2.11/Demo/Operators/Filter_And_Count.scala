@@ -1,10 +1,11 @@
 package Demo.Operators
 
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.execution.streaming.FileStreamSource.Timestamp
 import org.apache.spark.sql.streaming.ProcessingTime
 
 
-object Filter_and_Join {
+object Filter_And_Count {
   def main(args: Array[String]): Unit = {
 
 
@@ -22,28 +23,27 @@ object Filter_and_Join {
       .option("subscribe", "messages")
       .load()
 
+    import org.apache.spark.sql.functions.window
     import spark.implicits._
 
-    val dictionary = Seq(Country("1", "Russia"), Country("2", "Germany"), Country("3", "USA")).toDS()
-
-    val result = stream.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
-      .as[(String, String)]
+    val result = stream.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)", "timestamp")
+      .as[(String, String, Timestamp)]
       .where("value % 10 == 0")
-      .join(dictionary, "key")
-      .select($"value".alias("key"), $"country".alias("value"))
+      .withWatermark("timestamp", "0 seconds")
+      .groupBy(window($"timestamp", "3 seconds") as 'date)
+      .count()
 
 
     val writer = result.writeStream
       .trigger(ProcessingTime(3000))
+      .outputMode("append")
       .format("console")
       .start()
-
 
     writer.awaitTermination()
 
   }
 
-  case class Country(key: String, country: String)
 
 }
 

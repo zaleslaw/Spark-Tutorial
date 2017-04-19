@@ -1,5 +1,7 @@
 package Demo.DStreams
 
+import java.lang.Boolean
+
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
@@ -10,17 +12,17 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 object Kafka_to_Console {
   def main(args: Array[String]): Unit = {
+
     val kafkaParams = Map[String, Object](
-      "bootstrap.servers" -> "localhost:9092,anotherhost:9092",
+      "bootstrap.servers" -> "localhost:9092",
       "key.deserializer" -> classOf[StringDeserializer],
       "value.deserializer" -> classOf[StringDeserializer],
-      "group.id" -> "newGroup",
+      "group.id" -> "test",
       "auto.offset.reset" -> "latest",
-      "enable.auto.commit" -> (false: java.lang.Boolean)
+      "enable.auto.commit" -> (false: Boolean)
     )
 
-
-    val conf = new SparkConf().setAppName("First").setMaster("local[2]")
+    val conf = new SparkConf().setAppName("DStream counter").setMaster("local[2]")
     val ssc = new StreamingContext(conf, Seconds(3))
 
     val topicName = "messages"
@@ -32,6 +34,7 @@ object Kafka_to_Console {
     stream.foreachRDD {
       rdd => println("Amount of elems " + rdd.count)
     }
+
 
     ssc.start()
     ssc.awaitTermination()
