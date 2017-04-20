@@ -4,7 +4,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.ProcessingTime
 
 
-object Filter_and_Join {
+object Ex_5_OrderBy {
   def main(args: Array[String]): Unit = {
 
 
@@ -26,18 +26,19 @@ object Filter_and_Join {
 
     val dictionary = Seq(Country("1", "Russia"), Country("2", "Germany"), Country("3", "USA")).toDS()
 
-    val result = stream.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
+    val join = stream.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
+      .selectExpr("CAST(key as STRING)", "CAST(value AS INT)")
       .as[(String, String)]
-      .where("value % 10 == 0")
       .join(dictionary, "key")
-      .select($"value".alias("key"), $"country".alias("value"))
+
+    val result = join.select($"country".alias("key"), $"value")
+      .orderBy($"key".desc)
 
 
     val writer = result.writeStream
       .trigger(ProcessingTime(3000))
       .format("console")
       .start()
-
 
     writer.awaitTermination()
 

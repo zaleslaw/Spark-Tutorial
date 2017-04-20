@@ -5,7 +5,7 @@ import org.apache.spark.sql.execution.streaming.FileStreamSource.Timestamp
 import org.apache.spark.sql.streaming.ProcessingTime
 
 
-object Filter_And_Count {
+object Ex_2_Filter_And_Count {
   def main(args: Array[String]): Unit = {
 
 

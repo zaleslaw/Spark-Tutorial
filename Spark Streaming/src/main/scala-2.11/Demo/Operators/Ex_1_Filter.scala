@@ -4,7 +4,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.streaming.ProcessingTime
 
 
-object Filter {
+object Ex_1_Filter {
   def main(args: Array[String]): Unit = {
 
 
