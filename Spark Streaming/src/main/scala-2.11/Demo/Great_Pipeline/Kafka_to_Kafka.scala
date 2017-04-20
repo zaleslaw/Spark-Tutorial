@@ -10,7 +10,7 @@ object Kafka_to_Kafka {
 
 
     val spark = SparkSession.builder
-      .master("local")
+      .master("local[2]")
       .appName("SparkKafka")
       .getOrCreate()
 
@@ -30,7 +30,6 @@ object Kafka_to_Kafka {
 
     val join = stream.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
       .selectExpr("CAST(key as STRING)", "CAST(value AS INT)")
-      .as[(String, String)]
       .join(dictionary, "key")
 
     val result = join.select($"country", $"value")

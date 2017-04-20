@@ -9,7 +9,7 @@ object Kafka_to_Console_v2 {
 
 
     val spark = SparkSession.builder
-      .master("local")
+      .master("local[2]")
       .appName("SparkKafka")
       .getOrCreate()
 

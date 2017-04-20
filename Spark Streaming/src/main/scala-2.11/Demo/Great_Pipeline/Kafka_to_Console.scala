@@ -1,6 +1,7 @@
 package Demo.Great_Pipeline
 
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.streaming.ProcessingTime
 
 
 object Kafka_to_Console {
@@ -8,9 +9,11 @@ object Kafka_to_Console {
 
 
     val spark = SparkSession.builder
-      .master("local")
+      .master("local[2]")
       .appName("SparkKafka")
       .getOrCreate()
+
+    spark.sparkContext.setLogLevel("ERROR")
 
     val stream = spark
       .readStream
@@ -21,15 +24,15 @@ object Kafka_to_Console {
 
     import spark.implicits._
 
-    val result = stream.selectExpr("CAST(key AS STRING)", "CAST(value as STRING)")
+    val result = stream.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
       .as[(String, String)]
 
-
-    val finalization = result.writeStream
+    val writer = result.writeStream
+      .trigger(ProcessingTime(3000))
       .format("console")
       .start()
 
-    finalization.awaitTermination()
+    writer.awaitTermination()
 
   }
 }
