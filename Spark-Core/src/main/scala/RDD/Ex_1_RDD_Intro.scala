@@ -67,9 +67,11 @@ object Ex_1_RDD_Intro {
 
     // Step 5: different actions
     println("--Different actions--")
-    println(cachedInts.first)
-    println(cachedInts.count)
+    println("First elem is " + cachedInts.first)
+    println("Total amount is " + cachedInts.count)
+    println("Take 2")
     cachedInts.take(2).foreach(println)
+    println("Take ordered 5")
     cachedInts.takeOrdered(5).foreach(println)
 
 
