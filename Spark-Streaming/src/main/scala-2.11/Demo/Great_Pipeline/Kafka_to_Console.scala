@@ -7,7 +7,6 @@ import org.apache.spark.sql.streaming.ProcessingTime
 object Kafka_to_Console {
   def main(args: Array[String]): Unit = {
 
-
     val spark = SparkSession.builder
       .master("local[2]")
       .appName("SparkKafka")
