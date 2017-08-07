@@ -25,13 +25,13 @@ object Ex_1_RDD_Intro {
 
 
     /*
-    SAMPLE-2: Make RDD based on Array
+    SAMPLE-2: Make RDD based on Array with reverse order
     */
     val sc = spark.sparkContext
 
     val r = 1 to 10 toArray
     // Creates RDD with 3 parts
-    val ints = sc.parallelize(r, 3)
+    val ints = sc.parallelize(r.reverse, 3)
 
     ints.saveAsTextFile("/home/zaleslaw/data/ints") // works for windows well
     val cachedInts = sc.textFile("/home/zaleslaw/data/ints")
@@ -41,12 +41,14 @@ object Ex_1_RDD_Intro {
     val squares = cachedInts
       .map(x => x * x)
 
+    println("--Squares--")
     squares.collect().foreach(println)
 
     // Step 2: Filter even numbers
 
     val even = squares.filter(x => x % 2 == 0)
 
+    println("--Even numbers--")
     even.collect().foreach(println)
 
     // Step 3: print RDD metadata
@@ -54,15 +56,18 @@ object Ex_1_RDD_Intro {
     println("Name is " + even.name + " id is " + even.id)
     println(even.toDebugString)
 
+    println("Total multiplication is " + even.reduce((a, b) => a * b))
+
     // Step 4: Transform to PairRDD make keys 0 for even and 1 for odd numbers and
     val groups = cachedInts.map(x => if (x % 2 == 0) {
       (0, x)
     } else {
       (1, x)
-    }).groupByKey
+    })
 
-    println(groups.toDebugString)
-    groups.collect().foreach(println)
+    println("--Groups--")
+    println(groups.groupByKey.toDebugString)
+    groups.groupByKey.collect.foreach(println)
     println(groups.countByKey)
 
     // Step 5: different actions
@@ -77,4 +82,3 @@ object Ex_1_RDD_Intro {
 
   }
 }
-
