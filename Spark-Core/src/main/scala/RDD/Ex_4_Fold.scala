@@ -10,7 +10,7 @@ object Ex_4_Fold {
 
     val spark = SparkSession.builder
       .master("local[2]")
-      .appName("RDD_Intro")
+      .appName("Fold")
       .getOrCreate()
 
     spark.sparkContext.setLogLevel("ERROR")

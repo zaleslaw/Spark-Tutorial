@@ -10,7 +10,7 @@ object Ex_3_Set_theory {
 
     val spark = SparkSession.builder
       .master("local[2]")
-      .appName("RDD_Intro")
+      .appName("Set_theory")
       .getOrCreate()
 
     spark.sparkContext.setLogLevel("ERROR")
