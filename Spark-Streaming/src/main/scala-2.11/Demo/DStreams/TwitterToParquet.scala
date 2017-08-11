@@ -2,6 +2,7 @@ package Demo.DStreams
 
 import java.util.Date
 
+import com.typesafe.config.ConfigFactory
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.apache.spark.streaming.twitter.TwitterUtils
@@ -27,17 +28,23 @@ object TwitterToParquet {
 
 
     // TODO: extract to outer config
-    System.setProperty("twitter4j.oauth.consumerKey", "wlSLT5qlmNuWUH6af3iM1MM5w")
-    System.setProperty("twitter4j.oauth.consumerSecret", "yAnJvlCDxH7ypBhrxlM4DcN1Op2n9H5KSrRe53BWROJOHjueuP")
-    System.setProperty("twitter4j.oauth.accessToken", "1897545698-UrA7gCK5QWpIB00XP83NYc5eYjACjDr1fmJhMwG")
-    System.setProperty("twitter4j.oauth.accessTokenSecret", "aPgF18UBBsKegghqTHo5l2ghdKqpj0pu6eIDtopXPuHat")
-
+    import collection.JavaConversions._
+    val config = ConfigFactory.load("application.conf").getConfig("twitter4j").getConfig("oauth")
+    config
+      .root()
+      .foreach({ case (k, v) => {
+        System.setProperty("twitter4j." + "oauth." + k, config.getString(k))
+        println(k, v)
+      }
+      })
 
     val stream = TwitterUtils.createStream(ssc, None)
     // .map(gson.toJson(_)) TODO: import GSON library
 
+    // Step - 1: Let's assume that users with small numbers of followers are bots
+    // What trends are popular among bots now?
+
     // Print user names with English as native language and have less than <threshold> friends
-    // We are interested in trends among bots
     val filteredTweets = stream.filter(status => status.getLang.equals("en") && status.getUser.getFollowersCount < 30)
 
     // Extract tags
@@ -47,18 +54,32 @@ object TwitterToParquet {
 
 
     import spark.implicits._
-    // Calculate trends
+    // Transform RDD to DF and save to Parquet
     tags.countByValue().foreachRDD {
       rdd =>
         val time = new Date().getTime
-        val dataFrame = rdd.sortBy(_._2).map(tag => (tag, time)).toDF()
+        val dataFrame = rdd.sortBy(_._2).map(tag => (tag._1, tag._2, time)).toDF()
         dataFrame.printSchema()
-        dataFrame.show()
-        dataFrame.write.mode(SaveMode.Append).parquet(s"result/$time")
+        val renamedDf = dataFrame.select($"_1".as("tag"), $"_2".as("count"), $"_3".as("time"))
+        renamedDf.printSchema()
+        renamedDf.show()
+        renamedDf.write.mode(SaveMode.Append).parquet(s"result/$time")
     }
 
     ssc.start()
-    ssc.awaitTermination()
+    ssc.awaitTerminationOrTimeout(30000)
+    ssc.stop(false)
+
+    println("Reading from parquet and print popular trends")
+
+    val result = spark.read.parquet("C:\\home\\Projects\\Spark-Tutorial\\Spark-Streaming\\result\\*")
+
+
+    result.select($"tag", $"count")
+      .groupBy($"tag")
+      .sum("count")
+      .orderBy($"sum(count)".desc)
+      .show(100)
   }
 
 }
