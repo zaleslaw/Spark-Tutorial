@@ -1,7 +1,7 @@
 package Sources_Sinks.Parquet
 
 /**
-  * Created by zaleslaw on 07.02.17.
+  * Should be executed together with Ex_1_TwitterToParquet
   */
 
 import org.apache.spark.sql.SparkSession
@@ -14,7 +14,6 @@ object FromParquet {
 
   def main(args: Array[String]): Unit = {
 
-
     val spark = SparkSession.builder
       .master("local")
       .appName("SparkKafka")
@@ -23,15 +22,16 @@ object FromParquet {
     spark.sparkContext.setLogLevel("WARN")
 
     val parquetFrame = spark.read.parquet("result/*")
-    parquetFrame.select("_1").show(10)
+    parquetFrame.select("tag").show(10)
 
 
-    val innerStruct =
-      StructType(StructField("_1", StringType, true) :: StructField("_2", LongType, false) :: Nil)
 
 
     val schema = StructType(
-      StructField("_1", innerStruct, true) :: StructField("_2", LongType, false) :: Nil)
+      StructField("tag", StringType, true)
+        :: StructField("count", LongType, false)
+        :: StructField("time", LongType, false)
+        :: Nil)
 
     val stream = spark
       .readStream

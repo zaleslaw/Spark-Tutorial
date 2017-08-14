@@ -12,7 +12,7 @@ import org.apache.spark.streaming.{Seconds, StreamingContext}
 /**
   * This class tracks all stuff about Spark and stores it to parquet files
   */
-object TwitterToParquet {
+object Ex_1_TwitterToParquet {
   def main(args: Array[String]): Unit = {
 
     val conf = new SparkConf().setAppName("TwitterToParquet").setMaster("local[2]")
@@ -81,5 +81,4 @@ object TwitterToParquet {
       .orderBy($"sum(count)".desc)
       .show(100)
   }
-
 }

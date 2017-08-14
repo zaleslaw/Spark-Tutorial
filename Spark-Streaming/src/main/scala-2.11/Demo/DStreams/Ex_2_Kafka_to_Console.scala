@@ -10,7 +10,7 @@ import org.apache.spark.streaming.kafka010._
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
 
-object Kafka_to_Console {
+object Ex_2_Kafka_to_Console {
   def main(args: Array[String]): Unit = {
 
     val kafkaParams = Map[String, Object](
