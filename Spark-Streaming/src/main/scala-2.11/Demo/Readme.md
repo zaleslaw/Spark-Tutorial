@@ -1,5 +1,12 @@
 1.*DStreams*
 
+import com.typesafe.config.ConfigFactory
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.{SaveMode, SparkSession}
+import org.apache.spark.streaming.twitter.TwitterUtils
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+
+
 object Ex_1_TwitterToParquet {
   def main(args: Array[String]): Unit = {
 
@@ -77,6 +84,14 @@ Present Kafka consumers and producers and multithreading producer
 
 3.*Kafka_to_Console with DStreams*
 
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.spark.SparkConf
+import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
+import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
+import org.apache.spark.streaming.kafka010._
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+
+
     val kafkaParams = Map[String, Object](
       "bootstrap.servers" -> "localhost:9092",
       "key.deserializer" -> classOf[StringDeserializer],
@@ -104,6 +119,10 @@ Present Kafka consumers and producers and multithreading producer
     ssc.awaitTermination()
 
 3.*Kafka_to_Console with Structured Streaming*
+
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.streaming.ProcessingTime
+
 
     val spark = SparkSession.builder
       .master("local[2]")

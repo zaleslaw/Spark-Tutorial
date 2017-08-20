@@ -1,7 +1,7 @@
 package Sources_Sinks.Parquet
 
 /**
-  * Should be executed together with Ex_1_TwitterToParquet
+  * Should be executed together with Ex_1_TwitterToParquet and working stream to parquet directory
   */
 
 import org.apache.spark.sql.SparkSession
