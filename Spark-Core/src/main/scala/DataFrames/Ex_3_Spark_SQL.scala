@@ -34,5 +34,6 @@ object Ex_3_Spark_SQL {
     result.show(150)
     result.explain(extended = true)
 
+
   }
 }
