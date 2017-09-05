@@ -39,5 +39,8 @@ buildNumber.properties
 out
 gen
 .idea/
-JDBC_Tutorial.iml
+
+# Specific files with output
+result
+h2ologs
 
