@@ -9,7 +9,7 @@ object Ex_3_Set_theory {
     System.setProperty("hadoop.home.dir", "c:\\")
 
     val spark = SparkSession.builder
-      .master("local[2]")
+      .master("local[*]")
       .appName("Set_theory")
       .getOrCreate()
 
@@ -21,17 +21,26 @@ object Ex_3_Set_theory {
     val functionalLanguages = sc.parallelize(List("Scala", "Kotlin", "JavaScript", "Haskell"))
     val webLanguages = sc.parallelize(List("PHP", "Ruby", "Perl", "PHP", "JavaScript"))
 
-    val result = webLanguages.distinct.union(jvmLanguages)
-    println(result.toDebugString)
+
     println("----Distinct----")
-    result.collect.foreach(println)
+    val distinctLangs = webLanguages.union(jvmLanguages).distinct()
+    println(distinctLangs.toDebugString)
+    distinctLangs.collect.foreach(println)
 
     println("----Intersection----")
-    jvmLanguages.intersection(functionalLanguages).collect.foreach(println)
+    val intersection = jvmLanguages.intersection(functionalLanguages)
+    println(intersection.toDebugString)
+    intersection.collect.foreach(println)
+
     println("----Subtract----")
-    webLanguages.subtract(functionalLanguages).collect.foreach(println)
+    val substraction = webLanguages.distinct.subtract(functionalLanguages)
+    println(substraction.toDebugString)
+    substraction.collect.foreach(println)
+
     println("----Cartesian----")
-    webLanguages.cartesian(jvmLanguages).collect.foreach(println)
+    val cartestian = webLanguages.distinct.cartesian(jvmLanguages)
+    println(cartestian.toDebugString)
+    cartestian.collect.foreach(println)
 
 
   }
