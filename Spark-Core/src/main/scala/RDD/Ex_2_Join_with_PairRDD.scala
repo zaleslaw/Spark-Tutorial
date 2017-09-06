@@ -21,10 +21,10 @@ object Ex_2_Join_with_PairRDD {
     val codeRows = sc.parallelize(Seq(("Ivan", 240), ("Elena", -15), ("Petr", 39), ("Elena", 290)))
 
     // Let's calculate sum of code lines by developer
-    //codeRows.reduceByKey((x, y) => x + y).collect().foreach(println)
+    codeRows.reduceByKey((x, y) => x + y).collect().foreach(println)
 
     // Or group items to do something else
-    //codeRows.groupByKey().collect().foreach(println)
+    codeRows.groupByKey().collect().foreach(println)
 
     // Don't forget about joins with preferred languages
 
