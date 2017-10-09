@@ -18,7 +18,7 @@ object Ex_8_Parse_CSV {
     spark.sparkContext.setLogLevel("ERROR")
     val sc = spark.sparkContext
 
-
+    // read from file
     val stateNamesCSV = sc.textFile("/home/zaleslaw/data/StateNames.csv")
     // split / clean data
     val headerAndRows = stateNamesCSV.map(line => line.split(",").map(_.trim))
