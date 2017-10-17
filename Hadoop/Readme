@@ -1,0 +1,10 @@
+1. Prepare files in HDFS with required permissions (mkdir /demo/training/input)
+2. Copy data through HDFS web view
+3. Create Maven project
+4. Add repository and dependencies
+5. Add main class
+6. Build jar
+7. Copy jar with WinSCP tool in executable directory (/home/bigdata)
+8. Run jar with command "hadoop jar hadoop-1.jar WordCount /demo/training/input /demo/training/output"
+9. Don't forget       job.setJarByClass(WordCount.class); if ClassNotFoundException
+10. Implement Tool interface (it makes your code more configurable)
