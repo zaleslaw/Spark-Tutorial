@@ -49,7 +49,6 @@ object Ex_8_Calculate_Average_RDD_vs_DataFrame {
     df.groupBy("key")
       .agg(avg("value"))
       .show()
-
   }
 
 }

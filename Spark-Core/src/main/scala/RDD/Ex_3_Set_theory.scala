@@ -21,7 +21,6 @@ object Ex_3_Set_theory {
     val functionalLanguages = sc.parallelize(List("Scala", "Kotlin", "JavaScript", "Haskell"))
     val webLanguages = sc.parallelize(List("PHP", "Ruby", "Perl", "PHP", "JavaScript"))
 
-
     println("----Distinct----")
     val distinctLangs = webLanguages.union(jvmLanguages).distinct()
     println(distinctLangs.toDebugString)
@@ -32,7 +31,7 @@ object Ex_3_Set_theory {
     println(intersection.toDebugString)
     intersection.collect.foreach(println)
 
-    println("----Subtract----")
+    println("----Substract----")
     val substraction = webLanguages.distinct.subtract(functionalLanguages)
     println(substraction.toDebugString)
     substraction.collect.foreach(println)

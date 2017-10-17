@@ -7,7 +7,7 @@ import org.apache.spark.sql.SparkSession
   * Parse central exam results in Russian for Yaroslavl-2016
   */
 
-object Practice_task_2 {
+object Practice_2_4 {
 
   val lambdaChangeNameArea = (nameArea: String) => {
     if (!nameArea.contains("Ярославль"))
@@ -47,7 +47,7 @@ object Practice_task_2 {
       .select("Head")
       .show(5, false)
 
-    //Step-2: Max, min, average Russian language,spravlyaemost for school who loves or hates geography
+    //Step-2: Max, min, average Physics,GPA for school who loves or hates geography
 
     import org.apache.spark.sql.functions._
     egeResults
