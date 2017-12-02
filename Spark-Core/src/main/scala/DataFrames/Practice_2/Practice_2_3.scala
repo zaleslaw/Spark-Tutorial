@@ -8,11 +8,19 @@ import org.apache.spark.sql.SparkSession
 
 object Practice_2_3 {
 
-  val lambdaChangeNameArea = (nameArea: String) => {
-    if (!nameArea.contains("Ярославль"))
-      "Это вам не Ярославль, возможно это Переславль"
-    else
-      "Лучший город земли"
+  val lambdaRecognizeSex = (head: String) => {
+    if(head != null){
+      val names = head.split(" ")
+      if (names.size > 2 && names(2).endsWith("вич"))
+        "Male"
+      else if(names.size > 2 && names(2).endsWith("вна"))
+        "Female"
+      else
+        "Unrecognized sex"
+    } else {
+      "Unrecognized sex"
+    }
+
   }
 
   def main(args: Array[String]): Unit = {
@@ -38,28 +46,20 @@ object Practice_2_3 {
     egeResults.cache()
     egeResults.printSchema()
 
-    //Step-1: Heads of Top-5 school by average mark on math
-    import spark.implicits._
-    egeResults
-      .where($"Mathematics profil,GPA".isNotNull)
-      .orderBy($"Mathematics profil,GPA".desc, $"Mathematics profil,amount".desc)
-      .select("Head")
-      .show(5, false)
-
-    //Step-2: Max, min, average Physics,GPA for school who loves or hates geography
-
     import org.apache.spark.sql.functions._
-    egeResults
-      .where($"Physics,GPA".isNotNull)
-      .withColumn("love_literature", $"Literature ,amount".isNotNull and $"Literature ,amount" > 3)
-        .groupBy("love_literature")
-        .agg(avg($"Physics,GPA").as("avg"), min($"Physics,GPA").as("min"), max($"Physics,GPA").as("max"))
-      .show()
 
     //Step-3: UDF
     import spark.implicits._ // very important import
-    val changeNameArea = spark.sqlContext.udf.register("changeNameArea", lambdaChangeNameArea)
-    egeResults.select(changeNameArea($"Name area").as("NameArea")).orderBy($"NameArea".desc).show(300)
+    val recognizeSex = spark.sqlContext.udf.register("recognizeSex", lambdaRecognizeSex)
+    val sexAndRussianGPA = egeResults.select($"Head", recognizeSex($"Head").as("Head_sex"), $"Russian language,GPA").orderBy($"Head_sex".desc)
+    sexAndRussianGPA.persist()
+    sexAndRussianGPA.show(300)
 
+    val result = sexAndRussianGPA
+      .groupBy("Head_sex")
+      .agg(avg("Russian language,GPA").as("avg"))
+
+    result.show
+    result.write.parquet("datasets/result")
   }
 }

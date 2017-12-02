@@ -48,7 +48,5 @@ object Practice_2_2 {
         .groupBy("love_literature")
         .agg(avg($"Physics,GPA").as("avg"), min($"Physics,GPA").as("min"), max($"Physics,GPA").as("max"))
       .show()
-
-
   }
 }
