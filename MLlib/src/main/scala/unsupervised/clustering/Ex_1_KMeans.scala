@@ -3,8 +3,6 @@ package unsupervised.clustering
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types._
-
 
 /**
   * Try to find clusters in small dataset and compare it with real classes
@@ -21,28 +19,6 @@ object Ex_1_KMeans {
       .getOrCreate()
 
     spark.sparkContext.setLogLevel("ERROR")
-
-
-
-/*    val schema = StructType(Array(
-      StructField("name", StringType, true),
-      StructField("hair", BooleanType, true),
-      StructField("feathers", BooleanType, true),
-      StructField("eggs", BooleanType, true),
-      StructField("milk", BooleanType, true),
-      StructField("airborne", BooleanType, true),
-      StructField("aquatic", BooleanType, true),
-      StructField("predator", BooleanType, true),
-      StructField("toothed", BooleanType, true),
-      StructField("backbone", BooleanType, true),
-      StructField("breathes", BooleanType, true),
-      StructField("venomous", BooleanType, true),
-      StructField("fins", BooleanType, true),
-      StructField("legs", IntegerType, true),
-      StructField("tail", BooleanType, true),
-      StructField("domestic", BooleanType, true),
-      StructField("catsize", BooleanType, true),
-      StructField("type", IntegerType, true)))*/
 
     val animals = spark.read
       .option("inferSchema", "true")
