@@ -5,9 +5,9 @@ import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.SparkSession
 
 /**
-  * Try to find clusters in small dataset and compare it with real classes
+  * How to read the model to reuse in Spark code?
   */
-object ReadKMeans {
+object Ex_2_ReadKMeans {
     def main(args: Array[String]): Unit = {
 
         //For windows only: don't forget to put winutils.exe to c:/bin folder

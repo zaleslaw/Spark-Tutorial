@@ -1,12 +1,14 @@
 package jbreak.eatable
 
+import jbreak.eatable.Ex_1_Classified_with_SVM.enrichPredictions
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
-  * Try to find clusters in small dataset and compare it with real classes
+  * Neural network works well two with such type of architecture.
+  * Also it makes feature reduction from 16 to 2
   */
 object Ex_3_Classified_with_Perceptron {
     def main(args: Array[String]): Unit = {
@@ -23,8 +25,9 @@ object Ex_3_Classified_with_Perceptron {
 
         val animals = spark.read
             .option("inferSchema", "true")
+            .option("charset", "windows-1251")
             .option("header", "true")
-            .csv("/home/zaleslaw/data/binarized_animals.csv")
+            .csv("/home/zaleslaw/data/cyr_binarized_animals.csv")
 
         // from 2-dimension space to 16-dimension space improves the prediction
         val assembler = new VectorAssembler()
@@ -32,11 +35,11 @@ object Ex_3_Classified_with_Perceptron {
             .setOutputCol("features")
 
         // Step - 2: Transform dataframe to vectorized dataframe
-        val output = assembler.transform(animals).select("features", "name", "type", "eatable")
+        val output = assembler.transform(animals).select("features", "eatable", "cyr_name")
 
         // specify layers for the neural network:
-        // input layer of size 4 (features), two intermediate of size 5 and 4
-        // and output of size 3 (classes)
+        // input layer of size 16 (features), intermediate of size 15,14,13,12,11,10
+        // and output of size 2 (classes)
         val layers = Array[Int](16, 15, 14, 13, 12, 11, 10, 2)
 
         // create the trainer and set its parameters
@@ -49,7 +52,9 @@ object Ex_3_Classified_with_Perceptron {
 
         val model = trainer.fit(output)
 
-        val predictions = model.transform(output)
+        val rawPredictions = model.transform(output)
+
+        val predictions: DataFrame = enrichPredictions(spark, rawPredictions)
 
         predictions.show(100, false)
 
@@ -57,7 +62,7 @@ object Ex_3_Classified_with_Perceptron {
             .setLabelCol("eatable")
             .setPredictionCol("prediction")
             .setMetricName("accuracy")
-        val accuracy = evaluator.evaluate(predictions)
+        val accuracy = evaluator.evaluate(rawPredictions)
         println("Test Error = " + (1.0 - accuracy))
 
     }

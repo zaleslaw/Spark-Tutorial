@@ -1,12 +1,13 @@
 package jbreak.eatable
 
+import jbreak.eatable.Ex_1_Classified_with_SVM.enrichPredictions
 import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
-  * Try to find clusters in small dataset and compare it with real classes
+  * Dataset marked from the Data Scientist's point ov view.
   */
 object Ex_2_Classified_with_Decision_Trees {
     def main(args: Array[String]): Unit = {
@@ -23,11 +24,9 @@ object Ex_2_Classified_with_Decision_Trees {
 
         val animals = spark.read
             .option("inferSchema", "true")
+            .option("charset", "windows-1251")
             .option("header", "true")
-            .csv("/home/zaleslaw/data/binarized_animals.csv")
-
-        animals.show()
-
+            .csv("/home/zaleslaw/data/cyr_binarized_animals.csv")
 
         /*    val assembler = new VectorAssembler()
                 .setInputCols(Array("legs","tail"))
@@ -39,7 +38,7 @@ object Ex_2_Classified_with_Decision_Trees {
             .setOutputCol("features")
 
         // Step - 2: Transform dataframe to vectorized dataframe
-        val output = assembler.transform(animals).select("features", "name", "type", "eatable")
+        val output = assembler.transform(animals).select("features", "eatable", "cyr_name")
 
         val trainer = new DecisionTreeClassifier()
             .setLabelCol("eatable")
@@ -47,15 +46,18 @@ object Ex_2_Classified_with_Decision_Trees {
 
         val model = trainer.fit(output)
 
-        val predictions = model.transform(output)
+        val rawPredictions = model.transform(output.sample(false, 0.4))
 
-        predictions.select("name", "prediction", "eatable", "features").show(100)
+
+        val predictions: DataFrame = enrichPredictions(spark, rawPredictions)
+
+        predictions.show(100, false)
 
         val evaluator = new MulticlassClassificationEvaluator()
             .setLabelCol("eatable")
             .setPredictionCol("prediction")
             .setMetricName("accuracy")
-        val accuracy = evaluator.evaluate(predictions)
+        val accuracy = evaluator.evaluate(rawPredictions)
         println("Test Error = " + (1.0 - accuracy))
 
         val treeModel = model.asInstanceOf[DecisionTreeClassificationModel]

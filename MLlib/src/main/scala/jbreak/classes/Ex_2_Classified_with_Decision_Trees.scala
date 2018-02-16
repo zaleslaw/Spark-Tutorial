@@ -3,7 +3,7 @@ package jbreak.classes
 import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
   * Try to find clusters in small dataset and compare it with real classes
@@ -23,16 +23,24 @@ object Ex_2_Classified_with_Decision_Trees {
 
         val animals = spark.read
             .option("inferSchema", "true")
+            .option("charset", "windows-1251")
             .option("header", "true")
-            .csv("/home/zaleslaw/data/animals.csv")
+            .csv("/home/zaleslaw/data/cyr_animals.csv")
 
+        val classNames = spark.read
+            .option("inferSchema", "true")
+            .option("charset", "windows-1251")
+            .option("header", "true")
+            .csv("/home/zaleslaw/data/cyr_class.csv")
+
+        val animalsWithClassTypeNames = animals.join(classNames, animals.col("type").equalTo(classNames.col("Class_Number")))
         // from 2-dimension space to 16-dimension space improves the prediction
         val assembler = new VectorAssembler()
             .setInputCols(Array("hair", "feathers", "eggs", "milk", "airborne", "aquatic", "predator", "toothed", "backbone", "breathes", "venomous", "fins", "legs", "tail", "domestic", "catsize"))
             .setOutputCol("features")
 
         // Step - 2: Transform dataframe to vectorized dataframe
-        val output = assembler.transform(animals).select("features", "name", "type")
+        val output = assembler.transform(animalsWithClassTypeNames).select("features", "name", "type", "cyr_name", "Cyr_Class_Type")
 
         val trainer = new DecisionTreeClassifier()
             .setLabelCol("type")
@@ -40,18 +48,45 @@ object Ex_2_Classified_with_Decision_Trees {
 
         val model = trainer.fit(output)
 
-        val predictions = model.transform(output)
+        val rawPredictions = model.transform(output)
 
-        predictions.select("name", "prediction", "type", "features").show(100)
+        val predictions: DataFrame = enrichPredictions(spark, classNames, rawPredictions)
+
+        predictions.show(100)
 
         val evaluator = new MulticlassClassificationEvaluator()
             .setLabelCol("type")
             .setPredictionCol("prediction")
             .setMetricName("accuracy")
-        val accuracy = evaluator.evaluate(predictions)
+
+        val accuracy = evaluator.evaluate(rawPredictions)
         println("Test Error = " + (1.0 - accuracy))
 
         val treeModel = model.asInstanceOf[DecisionTreeClassificationModel]
         println("Learned classification tree model:\n" + treeModel.toDebugString)
+    }
+
+    def enrichPredictions(spark: SparkSession,
+        classNames: DataFrame, rawPredictions: DataFrame) = {
+        import spark.implicits._
+
+        val prClassNames = classNames.select($"Class_Number".as("pr_class_id"), $"Cyr_Class_Type".as("pr_class_type"))
+        val enrichedPredictions = rawPredictions.join(prClassNames, rawPredictions.col("prediction").equalTo(prClassNames.col("pr_class_id")))
+
+        val lambdaCheckClasses = (Type: String, Prediction: String) => {
+            if (Type.equals(Prediction)) ""
+            else "ERROR"
+        }
+
+        val checkClasses = spark.sqlContext.udf.register("isWorldWarTwoYear", lambdaCheckClasses)
+
+        val predictions = enrichedPredictions.select(
+            $"name",
+            $"cyr_name".as("Name"),
+            $"Cyr_Class_Type".as("Real_class_type"),
+            $"pr_class_type".as("Predicted_class_type"))
+            .withColumn("Error", checkClasses($"Real_class_type", $"Predicted_class_type"))
+            .orderBy($"Error".desc)
+        predictions
     }
 }

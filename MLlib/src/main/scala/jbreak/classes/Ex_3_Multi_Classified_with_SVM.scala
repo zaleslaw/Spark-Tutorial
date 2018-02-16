@@ -1,12 +1,13 @@
 package jbreak.classes
 
+import jbreak.classes.Ex_2_Classified_with_Decision_Trees.enrichPredictions
 import org.apache.spark.ml.classification.{LinearSVC, LinearSVCModel, OneVsRest}
 import org.apache.spark.ml.evaluation.{BinaryClassificationEvaluator, MulticlassClassificationEvaluator}
 import org.apache.spark.ml.feature.VectorAssembler
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
-  * Try to find clusters in small dataset and compare it with real classes
+  * Let's see that SVM with One-vs-Rest approach works well for Multi-Class classification
   */
 object Ex_3_Multi_Classified_with_SVM {
     def main(args: Array[String]): Unit = {
@@ -23,9 +24,17 @@ object Ex_3_Multi_Classified_with_SVM {
 
         val animals = spark.read
             .option("inferSchema", "true")
+            .option("charset", "windows-1251")
             .option("header", "true")
-            .csv("/home/zaleslaw/data/binarized_animals.csv")
+            .csv("/home/zaleslaw/data/cyr_animals.csv")
 
+        val classNames = spark.read
+            .option("inferSchema", "true")
+            .option("charset", "windows-1251")
+            .option("header", "true")
+            .csv("/home/zaleslaw/data/cyr_class.csv")
+
+        val animalsWithClassTypeNames = animals.join(classNames, animals.col("type").equalTo(classNames.col("Class_Number")))
 
         /*    val assembler = new VectorAssembler()
                 .setInputCols(Array("legs","tail"))
@@ -36,7 +45,7 @@ object Ex_3_Multi_Classified_with_SVM {
             .setOutputCol("features")
 
         // Step - 2: Transform dataframe to vectorized dataframe
-        val output = assembler.transform(animals).select("features", "name", "type")
+        val output = assembler.transform(animalsWithClassTypeNames).select("features", "name", "type", "cyr_name", "Cyr_Class_Type")
 
         // Step - 3: Train model
         val classifier = new LinearSVC()
@@ -50,19 +59,24 @@ object Ex_3_Multi_Classified_with_SVM {
         // train the multiclass model.
         val model = multiClassTrainer.fit(output)
 
+
+        // print out all
         model.models
             .map(e => e.asInstanceOf[LinearSVCModel])
             .foreach(
                 mdl => println(s"Coefficients for specific model : ${mdl.coefficients} and intercept: ${mdl.intercept}"))
 
-        val predictions = model.transform(output)
+        val rawPredictions = model.transform(output)
+
+        val predictions: DataFrame = Ex_2_Classified_with_Decision_Trees.enrichPredictions(spark, classNames, rawPredictions)
+
         predictions.show(100, true)
 
         val evaluator = new MulticlassClassificationEvaluator()
             .setLabelCol("type")
             .setPredictionCol("prediction")
             .setMetricName("accuracy")
-        val accuracy = evaluator.evaluate(predictions)
+        val accuracy = evaluator.evaluate(rawPredictions)
         println("Test Error = " + (1.0 - accuracy))
 
     }

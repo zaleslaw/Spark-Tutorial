@@ -5,9 +5,10 @@ import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.SparkSession
 
 /**
-  * Try to find clusters in small dataset and compare it with real classes
+  * How to share trained model in Spark?
+  * The best approach - is serialization and sharing through the file.
   */
-object WriteKMeans {
+object Ex_1_WriteKMeans {
     def main(args: Array[String]): Unit = {
 
         //For windows only: don't forget to put winutils.exe to c:/bin folder

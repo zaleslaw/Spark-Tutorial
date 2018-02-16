@@ -22,10 +22,21 @@ object Ex_1_Clustering_with_KMeans {
 
         val animals = spark.read
             .option("inferSchema", "true")
+            .option("charset", "windows-1251")
             .option("header", "true")
-            .csv("/home/zaleslaw/data/animals.csv")
+            .csv("/home/zaleslaw/data/cyr_animals.csv")
 
         animals.show()
+
+        val classNames = spark.read
+            .option("inferSchema", "true")
+            .option("charset", "windows-1251")
+            .option("header", "true")
+            .csv("/home/zaleslaw/data/cyr_class.csv")
+
+        classNames.show(false)
+
+        val animalsWithClassTypeNames = animals.join(classNames, animals.col("type").equalTo(classNames.col("Class_Number")))
 
         //Exception in thread "main" java.lang.IllegalArgumentException: Field "features" does not exist.
         // don't forget transform all your columns with VectorAssembler to 'features'
@@ -38,7 +49,7 @@ object Ex_1_Clustering_with_KMeans {
             .setOutputCol("features")
 
         // Step - 2: Transform dataframe to vectorized dataframe
-        val output = assembler.transform(animals).select("features", "name", "type")
+        val output = assembler.transform(animalsWithClassTypeNames).select("features", "cyr_name", "Cyr_Class_Type")
 
         // Step - 3: Train model
         val kmeans = new KMeans()
@@ -58,8 +69,6 @@ object Ex_1_Clustering_with_KMeans {
         println("Cluster Centers: ")
         model.clusterCenters.foreach(println)
 
-
-
         println("Real clusters and predicted clusters")
         val predictions = model.summary.predictions
         predictions.show(200)
@@ -70,14 +79,14 @@ object Ex_1_Clustering_with_KMeans {
 
         println("Predicted classes")
         predictions
-            .select("name", "cluster")
+            .select("cyr_name", "cluster")
             .groupBy("cluster")
-            .agg(collect_list("name")).show(predictions.count().toInt, false)
+            .agg(collect_list("cyr_name")).show(predictions.count().toInt, false)
 
         println("Real classes")
         output
-            .select("name", "type")
-            .groupBy("type")
-            .agg(collect_list("name")).show(predictions.count().toInt, false)
+            .select("cyr_name", "Cyr_Class_Type")
+            .groupBy("Cyr_Class_Type")
+            .agg(collect_list("cyr_name")).show(predictions.count().toInt, false)
     }
 }
