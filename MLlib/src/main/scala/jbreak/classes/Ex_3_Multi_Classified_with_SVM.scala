@@ -22,20 +22,9 @@ object Ex_3_Multi_Classified_with_SVM {
 
         spark.sparkContext.setLogLevel("ERROR")
 
-        val animals = spark.read
-            .option("inferSchema", "true")
-            .option("charset", "windows-1251")
-            .option("header", "true")
-            .csv("/home/zaleslaw/data/cyr_animals.csv")
+        val (classNames, animals) = Ex_2_Classified_with_Decision_Trees.readAnimalsAndClassNames(spark)
 
-        val classNames = spark.read
-            .option("inferSchema", "true")
-            .option("charset", "windows-1251")
-            .option("header", "true")
-            .csv("/home/zaleslaw/data/cyr_class.csv")
-
-        val animalsWithClassTypeNames = animals.join(classNames, animals.col("type").equalTo(classNames.col("Class_Number")))
-
+        // Step - 1: Make Vectors from dataframe's columns using special Vector Assmebler
         /*    val assembler = new VectorAssembler()
                 .setInputCols(Array("legs","tail"))
                 .setOutputCol("features")*/
@@ -45,7 +34,7 @@ object Ex_3_Multi_Classified_with_SVM {
             .setOutputCol("features")
 
         // Step - 2: Transform dataframe to vectorized dataframe
-        val output = assembler.transform(animalsWithClassTypeNames).select("features", "name", "type", "cyr_name", "Cyr_Class_Type")
+        val output = assembler.transform(animals).select("features", "name", "type", "cyr_name", "Cyr_Class_Type")
 
         // Step - 3: Train model
         val classifier = new LinearSVC()
@@ -53,18 +42,19 @@ object Ex_3_Multi_Classified_with_SVM {
             .setRegParam(0.8)
             .setLabelCol("type")
 
-        // instantiate the One Vs Rest Classifier.
+        // Step - 4: Instantiate the One Vs Rest Classifier.
         val multiClassTrainer = new OneVsRest().setClassifier(classifier).setLabelCol("type")
 
-        // train the multiclass model.
+        // Step - 5: Train the multiclass model.
         val model = multiClassTrainer.fit(output)
 
 
-        // print out all
+        // Step - 6: Print out all models
         model.models
             .map(e => e.asInstanceOf[LinearSVCModel])
             .foreach(
                 mdl => println(s"Coefficients for specific model : ${mdl.coefficients} and intercept: ${mdl.intercept}"))
+
 
         val rawPredictions = model.transform(output)
 

@@ -6,7 +6,7 @@ import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
-  * Try to find clusters in small dataset and compare it with real classes
+  * This example lights usage of Decision Trees algorithm for Multi-class classification task.
   */
 object Ex_2_Classified_with_Decision_Trees {
     def main(args: Array[String]): Unit = {
@@ -21,20 +21,9 @@ object Ex_2_Classified_with_Decision_Trees {
 
         spark.sparkContext.setLogLevel("ERROR")
 
-        val animals = spark.read
-            .option("inferSchema", "true")
-            .option("charset", "windows-1251")
-            .option("header", "true")
-            .csv("/home/zaleslaw/data/cyr_animals.csv")
+        val (classNames, animalsWithClassTypeNames) = readAnimalsAndClassNames(spark)
 
-        val classNames = spark.read
-            .option("inferSchema", "true")
-            .option("charset", "windows-1251")
-            .option("header", "true")
-            .csv("/home/zaleslaw/data/cyr_class.csv")
-
-        val animalsWithClassTypeNames = animals.join(classNames, animals.col("type").equalTo(classNames.col("Class_Number")))
-        // from 2-dimension space to 16-dimension space improves the prediction
+        // Step - 1: Make Vectors from dataframe's columns using special Vector Assmebler
         val assembler = new VectorAssembler()
             .setInputCols(Array("hair", "feathers", "eggs", "milk", "airborne", "aquatic", "predator", "toothed", "backbone", "breathes", "venomous", "fins", "legs", "tail", "domestic", "catsize"))
             .setOutputCol("features")
@@ -66,6 +55,36 @@ object Ex_2_Classified_with_Decision_Trees {
         println("Learned classification tree model:\n" + treeModel.toDebugString)
     }
 
+    /**
+      * Read and parse two csv files to the tuple of dataframes.
+      * @param spark
+      * @return Tuple of dataframes [classNames, animals]
+      */
+    def readAnimalsAndClassNames(spark: SparkSession): (DataFrame, DataFrame) = {
+        val animals = spark.read
+            .option("inferSchema", "true")
+            .option("charset", "windows-1251")
+            .option("header", "true")
+            .csv("/home/zaleslaw/data/cyr_animals.csv")
+
+        val classNames = spark.read
+            .option("inferSchema", "true")
+            .option("charset", "windows-1251")
+            .option("header", "true")
+            .csv("/home/zaleslaw/data/cyr_class.csv")
+
+        val animalsWithClassTypeNames = animals.join(classNames, animals.col("type").equalTo(classNames.col("Class_Number")))
+
+        (classNames, animalsWithClassTypeNames)
+    }
+
+    /**
+      * Adds cyrillic class names to the raw prediction dataset, also it renames a few of columns and sort it.
+      * @param spark
+      * @param classNames
+      * @param rawPredictions
+      * @return enriched predictions with class names
+      */
     def enrichPredictions(spark: SparkSession,
         classNames: DataFrame, rawPredictions: DataFrame) = {
         import spark.implicits._
@@ -87,6 +106,7 @@ object Ex_2_Classified_with_Decision_Trees {
             $"pr_class_type".as("Predicted_class_type"))
             .withColumn("Error", checkClasses($"Real_class_type", $"Predicted_class_type"))
             .orderBy($"Error".desc)
+
         predictions
     }
 }
