@@ -1,4 +1,4 @@
-package jbreak.classes
+package jbreak.define_classes
 
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.VectorAssembler
@@ -21,9 +21,12 @@ object Ex_1_Clustering_with_KMeans {
 
     spark.sparkContext.setLogLevel("ERROR")
 
+    // Step - 0: Overview the animal dataset and read it
     val animals = readAnimalDataset(spark)
 
-    // Step - 1: Make Vectors from dataframe's columns using special Vector Assmebler
+    animals.show
+
+    // Step - 1: Make Vectors from dataframe's columns using special VectorAssembler object
     val assembler = new VectorAssembler()
       .setInputCols(Array("hair", "feathers", "eggs", "milk", "airborne", "aquatic", "predator", "predator", "toothed", "backbone", "breathes", "venomous", "fins", "legs", "tail", "domestic", "catsize"))
       .setOutputCol("features")

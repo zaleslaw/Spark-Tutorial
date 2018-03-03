@@ -1,4 +1,4 @@
-package jbreak.classes
+package jbreak.define_classes
 
 import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
@@ -23,7 +23,7 @@ object Ex_2_Classified_with_Decision_Trees {
 
     val (classNames, animalsWithClassTypeNames) = readAnimalsAndClassNames(spark)
 
-    // Step - 1: Make Vectors from dataframe's columns using special Vector Assmebler
+    // Step - 1: Make Vectors from dataframe's columns using special VectorAssembler object
         val assembler = new VectorAssembler()
          .setInputCols(Array("legs","tail"))
          .setOutputCol("features")
