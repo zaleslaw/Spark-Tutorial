@@ -11,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
   * You can see that SVM doesn't work well.
   * The possible explanation: both classes are not linear separable.
   */
-object Ex_1_Classified_with_SVM {
+object jb_4_Classified_with_SVM {
   def main(args: Array[String]): Unit = {
 
     //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -33,20 +33,17 @@ object Ex_1_Classified_with_SVM {
     animals.show()
 
     val assembler = new VectorAssembler()
-      .setInputCols(Array("legs", "tail"))
+      .setInputCols(Array("hair", "feathers", "eggs", "milk", "airborne", "aquatic", "predator", "toothed", "backbone", "breathes", "venomous", "fins", "legs", "tail", "domestic", "catsize"))
       .setOutputCol("features")
-
-    /*   val assembler = new VectorAssembler()
-           .setInputCols(Array("hair","feathers","eggs","milk","airborne","aquatic","predator","toothed","backbone","breathes","venomous","fins","legs","tail","domestic", "catsize"))
-           .setOutputCol("features")
-   */
 
     // Step - 2: Transform dataframe to vectorized dataframe
     val output = assembler.transform(animals).select("features", "eatable", "cyr_name")
 
+    output.cache()
+
     // Step - 3: Train model
     val trainer = new LinearSVC()
-      .setMaxIter(20)
+      .setMaxIter(100)
       .setRegParam(0.8)
       .setLabelCol("eatable")
 
@@ -54,7 +51,7 @@ object Ex_1_Classified_with_SVM {
 
     println(s"Coefficients: ${model.coefficients} Intercept: ${model.intercept}")
 
-    val rawPredictions = model.transform(output.sample(false, 0.2))
+    val rawPredictions = model.transform(output)
 
     val predictions: DataFrame = enrichPredictions(spark, rawPredictions)
 
@@ -78,7 +75,7 @@ object Ex_1_Classified_with_SVM {
       else "ERROR"
     }
 
-    val checkClasses = spark.sqlContext.udf.register("isWorldWarTwoYear", lambdaCheckClasses)
+    val checkClasses = spark.sqlContext.udf.register("checkClasses", lambdaCheckClasses)
 
     val predictions = rawPredictions.select(
       $"cyr_name".as("Name"),

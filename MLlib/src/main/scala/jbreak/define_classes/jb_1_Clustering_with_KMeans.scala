@@ -8,7 +8,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 /**
   * Try to find clusters in dataset 'animals' and compare it with real classes
   */
-object Ex_1_Clustering_with_KMeans {
+object jb_1_Clustering_with_KMeans {
   def main(args: Array[String]): Unit = {
 
     //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -28,8 +28,12 @@ object Ex_1_Clustering_with_KMeans {
 
     // Step - 1: Make Vectors from dataframe's columns using special VectorAssembler object
     val assembler = new VectorAssembler()
-      .setInputCols(Array("hair", "feathers", "eggs", "milk", "airborne", "aquatic", "predator", "predator", "toothed", "backbone", "breathes", "venomous", "fins", "legs", "tail", "domestic", "catsize"))
+      .setInputCols(Array("hair","milk")) // + add "eggs"
       .setOutputCol("features")
+
+    /*    val assembler = new VectorAssembler()
+      .setInputCols(Array("hair", "feathers", "eggs", "milk", "airborne", "aquatic", "predator", "toothed", "backbone", "breathes", "venomous", "fins", "legs", "tail", "domestic", "catsize"))
+      .setOutputCol("features")*/
 
     // Step - 2: Transform dataframe to vectorized dataframe
     val vectorizedDF = assembler.transform(animals).select("features", "cyr_name", "Cyr_Class_Type")
@@ -67,7 +71,10 @@ object Ex_1_Clustering_with_KMeans {
       predictions
         .select("cyr_name", "cluster")
         .groupBy("cluster")
-        .agg(collect_list("cyr_name")).show(predictions.count().toInt, false)
+        .agg(collect_list("cyr_name"))
+        .orderBy("cluster")
+        .show(predictions.count().toInt, false)
+
     }
 
     println("Real classes")

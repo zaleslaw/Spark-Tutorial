@@ -1,6 +1,6 @@
 package jbreak.eatable
 
-import jbreak.eatable.Ex_1_Classified_with_SVM.enrichPredictions
+import jbreak.eatable.jb_4_Classified_with_SVM.enrichPredictions
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
@@ -9,8 +9,10 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 /**
   * Neural network works well too with such type of architecture.
   * Also it makes feature reduction from 16 to 2
+  *
+  * Accuracy is comparable with DT, but FP, FN errors are better for our life quality
   */
-object Ex_3_Classified_with_Perceptron {
+object jb_6_Classified_with_Perceptron {
   def main(args: Array[String]): Unit = {
 
     //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -36,6 +38,8 @@ object Ex_3_Classified_with_Perceptron {
 
     // Step - 2: Transform dataframe to vectorized dataframe
     val output = assembler.transform(animals).select("features", "eatable", "cyr_name")
+
+    output.cache()
 
     // specify layers for the neural network:
     // input layer of size 16 (features), intermediate of size 15,14,13,12,11,10

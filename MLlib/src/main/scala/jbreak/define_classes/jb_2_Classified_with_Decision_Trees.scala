@@ -8,7 +8,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 /**
   * This example lights usage of Decision Trees algorithm for Multi-class classification task.
   */
-object Ex_2_Classified_with_Decision_Trees {
+object jb_2_Classified_with_Decision_Trees {
   def main(args: Array[String]): Unit = {
 
     //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -25,8 +25,9 @@ object Ex_2_Classified_with_Decision_Trees {
 
     // Step - 1: Make Vectors from dataframe's columns using special VectorAssembler object
         val assembler = new VectorAssembler()
-         .setInputCols(Array("legs","tail"))
+         .setInputCols(Array("milk"))
          .setOutputCol("features")
+    // Q: Why do we have so many birds?
 
 /*    val assembler = new VectorAssembler()
       .setInputCols(Array("hair", "feathers", "eggs", "milk", "airborne", "aquatic", "predator", "toothed", "backbone", "breathes", "venomous", "fins", "legs", "tail", "domestic", "catsize"))
@@ -103,7 +104,7 @@ object Ex_2_Classified_with_Decision_Trees {
       else "ERROR"
     }
 
-    val checkClasses = spark.sqlContext.udf.register("isWorldWarTwoYear", lambdaCheckClasses)
+    val checkClasses = spark.sqlContext.udf.register("checkClasses", lambdaCheckClasses)
 
     val predictions = enrichedPredictions.select(
       $"name",

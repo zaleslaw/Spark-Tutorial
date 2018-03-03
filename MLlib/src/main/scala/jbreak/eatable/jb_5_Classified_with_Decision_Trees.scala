@@ -1,6 +1,6 @@
 package jbreak.eatable
 
-import jbreak.eatable.Ex_1_Classified_with_SVM.enrichPredictions
+import jbreak.eatable.jb_4_Classified_with_SVM.enrichPredictions
 import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
@@ -11,7 +11,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
   *
   * But the DT works well for this case.
   */
-object Ex_2_Classified_with_Decision_Trees {
+object jb_5_Classified_with_Decision_Trees {
   def main(args: Array[String]): Unit = {
 
     //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -30,10 +30,6 @@ object Ex_2_Classified_with_Decision_Trees {
       .option("header", "true")
       .csv("/home/zaleslaw/data/cyr_binarized_animals.csv")
 
-    /*    val assembler = new VectorAssembler()
-            .setInputCols(Array("legs","tail"))
-            .setOutputCol("features")*/
-
     // from 2-dimension space to 16-dimension space improves the prediction
     val assembler = new VectorAssembler()
       .setInputCols(Array("hair", "feathers", "eggs", "milk", "airborne", "aquatic", "predator", "toothed", "backbone", "breathes", "venomous", "fins", "legs", "tail", "domestic", "catsize"))
@@ -42,13 +38,15 @@ object Ex_2_Classified_with_Decision_Trees {
     // Step - 2: Transform dataframe to vectorized dataframe
     val output = assembler.transform(animals).select("features", "eatable", "cyr_name")
 
+    output.cache()
+
     val trainer = new DecisionTreeClassifier()
       .setLabelCol("eatable")
       .setFeaturesCol("features")
 
     val model = trainer.fit(output)
 
-    val rawPredictions = model.transform(output.sample(false, 0.4))
+    val rawPredictions = model.transform(output)
 
 
     val predictions: DataFrame = enrichPredictions(spark, rawPredictions)
