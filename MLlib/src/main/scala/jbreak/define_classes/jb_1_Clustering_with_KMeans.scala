@@ -28,7 +28,7 @@ object jb_1_Clustering_with_KMeans {
 
     // Step - 1: Make Vectors from dataframe's columns using special VectorAssembler object
     val assembler = new VectorAssembler()
-      .setInputCols(Array("hair","milk")) // + add "eggs"
+      .setInputCols(Array("hair","milk", "eggs")) // + add "eggs"
       .setOutputCol("features")
 
     /*    val assembler = new VectorAssembler()

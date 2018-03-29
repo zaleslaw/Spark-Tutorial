@@ -24,14 +24,14 @@ object jb_2_Classified_with_Decision_Trees {
     val (classNames, animalsWithClassTypeNames) = readAnimalsAndClassNames(spark)
 
     // Step - 1: Make Vectors from dataframe's columns using special VectorAssembler object
-        val assembler = new VectorAssembler()
-         .setInputCols(Array("milk"))
-         .setOutputCol("features")
+ /*       val assembler = new VectorAssembler()
+         .setInputCols(Array("milk", "hair", "legs"))
+         .setOutputCol("features")*/
     // Q: Why do we have so many birds?
 
-/*    val assembler = new VectorAssembler()
+    val assembler = new VectorAssembler()
       .setInputCols(Array("hair", "feathers", "eggs", "milk", "airborne", "aquatic", "predator", "toothed", "backbone", "breathes", "venomous", "fins", "legs", "tail", "domestic", "catsize"))
-      .setOutputCol("features")*/
+      .setOutputCol("features")
 
     // Step - 2: Transform dataframe to vectorized dataframe
     val output = assembler.transform(animalsWithClassTypeNames).select("features", "name", "type", "cyr_name", "Cyr_Class_Type")
