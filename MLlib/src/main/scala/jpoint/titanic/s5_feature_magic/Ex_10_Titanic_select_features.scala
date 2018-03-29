@@ -1,5 +1,6 @@
-package jpoint.online.titanic.s4_scaling
+package jpoint.titanic.s5_feature_magic
 
+import jpoint.titanic.s4_scaling.Ex_8_Titanic_Scaling.Printer
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
@@ -9,9 +10,9 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 /**
-  * Add Scaler and Normalizer power. Accuracy = 0.177
+  * Select features with PCA. Accuracy = 0.1718
   */
-object Ex_8_Titanic_Scaling {
+object Ex_10_Titanic_select_features {
     def main(args: Array[String]): Unit = {
 
         //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -46,23 +47,24 @@ object Ex_8_Titanic_Scaling {
         // Step - 2: Make Vectors from dataframe's columns using special Vector Assmebler
         val assembler = new VectorAssembler()
             .setInputCols(Array("pclass_imputed", "sibsp_imputed", "parch_imputed", "age_imputed", "fare_imputed", "sexIndexed_imputed", "embarkedIndexed_imputed"))
-            .setOutputCol("unscaled_features")
-
-        val scaler = new MaxAbsScaler()
-            .setInputCol("unscaled_features")
-            .setOutputCol("unnorm_features")
-
-        val normalizer = new Normalizer()
-            .setInputCol("unnorm_features")
             .setOutputCol("features")
-            .setP(2.0)
+
+        val polyExpansion = new PolynomialExpansion()
+            .setInputCol("features")
+            .setOutputCol("polyFeatures")
+            .setDegree(2)
+
+        val pca = new PCA()
+            .setInputCol("polyFeatures")
+            .setK(10)
+            .setOutputCol("pcaFeatures")
 
         val trainer = new DecisionTreeClassifier()
             .setLabelCol("survived")
-            .setFeaturesCol("features")
+            .setFeaturesCol("pcaFeatures")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, scaler, normalizer, new Printer, trainer))
+            .setStages(Array(sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, polyExpansion, pca, new Printer, trainer))
 
         val model = pipeline.fit(passengers)
 
@@ -111,27 +113,6 @@ object Ex_8_Titanic_Scaling {
             result.show()
             result.printSchema()
             result
-        }
-
-        override def copy(
-            extra: ParamMap): Transformer = null
-
-        override def transformSchema(
-            schema: StructType): StructType = schema
-
-        override val uid: String = "CustomTransformer" + serialVersionUID
-    }
-
-
-    class Printer extends Transformer {
-        private val serialVersionUID = 3345470640951989469L
-
-        override def transform(
-            dataset: Dataset[_]): DataFrame = {
-            println(">>>>>>>>>> Printer output")
-            dataset.show(false)
-            dataset.printSchema()
-            dataset.toDF()
         }
 
         override def copy(

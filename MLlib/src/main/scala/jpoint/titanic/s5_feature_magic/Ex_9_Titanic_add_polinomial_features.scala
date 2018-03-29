@@ -1,17 +1,18 @@
-package jpoint.online.titanic.s3_pipeline
+package jpoint.titanic.s5_feature_magic
 
-import org.apache.spark.ml.{Pipeline, Transformer}
-import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier}
+import jpoint.titanic.s4_scaling.Ex_8_Titanic_Scaling.Printer
+import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.feature.{Imputer, StringIndexer, VectorAssembler}
+import org.apache.spark.ml.feature._
 import org.apache.spark.ml.param.ParamMap
+import org.apache.spark.ml.{Pipeline, Transformer}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 /**
-  * The same result with Pipeline API. Accuracy = 0,19
+  * Add polynomial features. Accuracy = 0.1795. Not so good, but maybe we can choose a subset of best features?
   */
-object Ex_6_Titanic_refactor_to_pipeline {
+object Ex_9_Titanic_add_polinomial_features{
     def main(args: Array[String]): Unit = {
 
         //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -25,7 +26,7 @@ object Ex_6_Titanic_refactor_to_pipeline {
         spark.sparkContext.setLogLevel("ERROR")
 
         val passengers = readPassengers(spark)
-            .select("survived", "pclass", "sibsp", "parch", "sex", "embarked")
+            .select("survived", "pclass", "sibsp", "parch", "sex", "embarked", "age", "fare")
 
         val sexIndexer = new StringIndexer()
             .setInputCol("sex")
@@ -39,21 +40,26 @@ object Ex_6_Titanic_refactor_to_pipeline {
 
         // Step - 1: Define default values for missing data
         val imputer = new Imputer()
-            .setInputCols(Array("pclass", "sibsp", "parch", "sexIndexed", "embarkedIndexed"))
-            .setOutputCols(Array("pclass", "sibsp", "parch", "sexIndexed", "embarkedIndexed").map(c => s"${c}_imputed"))
+            .setInputCols(Array("pclass", "sibsp", "parch", "age", "fare", "sexIndexed", "embarkedIndexed"))
+            .setOutputCols(Array("pclass", "sibsp", "parch", "age", "fare", "sexIndexed", "embarkedIndexed").map(c => s"${c}_imputed"))
             .setStrategy("mean")
 
         // Step - 2: Make Vectors from dataframe's columns using special Vector Assmebler
         val assembler = new VectorAssembler()
-            .setInputCols(Array("pclass_imputed", "sibsp_imputed", "parch_imputed", "sexIndexed_imputed", "embarkedIndexed_imputed"))
+            .setInputCols(Array("pclass_imputed", "sibsp_imputed", "parch_imputed", "age_imputed", "fare_imputed", "sexIndexed_imputed", "embarkedIndexed_imputed"))
             .setOutputCol("features")
+
+        val polyExpansion = new PolynomialExpansion()
+            .setInputCol("features")
+            .setOutputCol("polyFeatures")
+            .setDegree(2)
 
         val trainer = new DecisionTreeClassifier()
             .setLabelCol("survived")
-            .setFeaturesCol("features")
+            .setFeaturesCol("polyFeatures")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, trainer))
+            .setStages(Array(sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, polyExpansion, new Printer, trainer))
 
         val model = pipeline.fit(passengers)
 
@@ -83,6 +89,8 @@ object Ex_6_Titanic_refactor_to_pipeline {
             .withColumn("pclass", $"pclass".cast(sql.types.DoubleType))
             .withColumn("sibsp", $"sibsp".cast(sql.types.DoubleType))
             .withColumn("parch", $"parch".cast(sql.types.DoubleType))
+            .withColumn("age", $"age".cast(sql.types.DoubleType))
+            .withColumn("fare", $"fare".cast(sql.types.DoubleType))
 
         castedPassengers.printSchema()
 
