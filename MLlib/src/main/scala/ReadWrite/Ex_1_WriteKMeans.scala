@@ -1,4 +1,4 @@
-package jpoint.ReadWrite
+package ReadWrite
 
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.VectorAssembler

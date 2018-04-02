@@ -1,7 +1,7 @@
-package jpoint.titanic.s6_the_name_mystery
+package jpoint.titanic.s5_feature_magic
 
 import jpoint.titanic.s4_scaling.Ex_8_Titanic_Scaling.Printer
-import org.apache.spark.ml.classification.DecisionTreeClassifier
+import org.apache.spark.ml.classification.{DecisionTreeClassifier, KNNClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.param.ParamMap
@@ -10,11 +10,9 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 /**
-  * Select features with PCA. Accuracy < 0.16 and reduced with increasing of PCA from 50 to 1000
-  *
-  * Increasing amount of features with decreasing of accuracy is an example of overfit.
+  * Select features with PCA. Accuracy = 0.10 !!!! Let's use kNN
   */
-object Ex_11_Titanic_extract_text_features {
+object Ex_11_Titanic_knn_magic {
     def main(args: Array[String]): Unit = {
 
         //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -28,24 +26,7 @@ object Ex_11_Titanic_extract_text_features {
         spark.sparkContext.setLogLevel("ERROR")
 
         val passengers = readPassengers(spark)
-            .select("survived", "pclass", "sibsp", "parch", "sex", "embarked", "age", "fare", "name")
-
-        passengers.cache()
-
-        val regexTokenizer = new RegexTokenizer()
-            .setInputCol("name")
-            .setOutputCol("name_parts")
-            .setPattern("\\w+").setGaps(false)
-
-        val remover = new StopWordsRemover()
-            .setStopWords(Array("mr", "mrs", "miss", "master", "jr", "j", "c", "d"))
-            .setInputCol("name_parts")
-            .setOutputCol("filtered_name_parts")
-
-        val hashingTF = new HashingTF()
-            .setInputCol("filtered_name_parts")
-            .setOutputCol("text_features")
-            .setNumFeatures(1000)
+            .select("survived", "pclass", "sibsp", "parch", "sex", "embarked", "age", "fare")
 
         val sexIndexer = new StringIndexer()
             .setInputCol("sex")
@@ -73,21 +54,19 @@ object Ex_11_Titanic_extract_text_features {
             .setOutputCol("polyFeatures")
             .setDegree(2)
 
-        val assembler2 = new VectorAssembler()
-            .setInputCols(Array("polyFeatures", "text_features"))
-            .setOutputCol("joinedFeatures")
-
         val pca = new PCA()
-            .setInputCol("joinedFeatures")
-            .setK(100)
+            .setInputCol("polyFeatures")
+            .setK(10)
             .setOutputCol("pcaFeatures")
 
-        val trainer = new DecisionTreeClassifier()
+        val trainer = new KNNClassifier()
+            .setTopTreeSize(3)
+            .setK(1)
             .setLabelCol("survived")
             .setFeaturesCol("pcaFeatures")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(regexTokenizer, remover, hashingTF, new Printer, sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, polyExpansion, assembler2, pca, new Printer, trainer))
+            .setStages(Array(sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, polyExpansion, pca, new Printer, trainer))
 
         val model = pipeline.fit(passengers)
 
@@ -122,7 +101,7 @@ object Ex_11_Titanic_extract_text_features {
 
         castedPassengers.printSchema()
 
-        castedPassengers.show(false)
+        castedPassengers.show()
 
         castedPassengers
     }

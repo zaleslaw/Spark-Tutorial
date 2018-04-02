@@ -1,7 +1,7 @@
-package jpoint.titanic.s6_the_name_mystery
+package jpoint.titanic.s7_random_forest
 
 import jpoint.titanic.s4_scaling.Ex_8_Titanic_Scaling.Printer
-import org.apache.spark.ml.classification.DecisionTreeClassifier
+import org.apache.spark.ml.classification.{DecisionTreeClassifier, RandomForestClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.param.ParamMap
@@ -10,9 +10,9 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 /**
-  * Select features with PCA. Accuracy > 0.2 and increasing with increasing of PCA from 100 to 1000
+  * Generate ensemble with Random Forest. Accuracy ~ 0.21
   */
-object Ex_12_Titanic_split_test_train_data {
+object Ex_14_Titanic_RF {
     def main(args: Array[String]): Unit = {
 
         //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -83,9 +83,11 @@ object Ex_12_Titanic_split_test_train_data {
             .setK(100) // change on 1000
             .setOutputCol("pcaFeatures")
 
-        val trainer = new DecisionTreeClassifier()
+        val trainer = new RandomForestClassifier()
             .setLabelCol("survived")
             .setFeaturesCol("pcaFeatures")
+            .setMaxDepth(20)
+            .setNumTrees(200)
 
         val pipeline:Pipeline = new Pipeline()
             .setStages(Array(regexTokenizer, remover, hashingTF, new Printer, sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, polyExpansion, assembler2, pca, new Printer, trainer))

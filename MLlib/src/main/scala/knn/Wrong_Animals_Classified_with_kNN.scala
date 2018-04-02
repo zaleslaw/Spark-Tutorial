@@ -1,4 +1,4 @@
-package jpoint.knn
+package knn
 
 import org.apache.spark.ml.classification.KNNClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
@@ -9,7 +9,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 /**
   * This kNN algorithm has the best prediction. On the same dataset, of course
   */
-object Animals_Classified_with_kNN_and_splitting{
+object Wrong_Animals_Classified_with_kNN {
     def main(args: Array[String]): Unit = {
 
         //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -32,10 +32,9 @@ object Animals_Classified_with_kNN_and_splitting{
         // Step - 2: Transform dataframe to vectorized dataframe
         val output = assembler.transform(animalsWithClassTypeNames).select("features", "name", "type", "cyr_name", "Cyr_Class_Type")
 
-
         val knn = new KNNClassifier()
             .setTopTreeSize(3)
-            .setK(3)
+            .setK(1)
             .setLabelCol("type")
             .setFeaturesCol("features")
 
@@ -64,6 +63,7 @@ object Animals_Classified_with_kNN_and_splitting{
       * @return Tuple of dataframes [classNames, animals]
       */
     def readAnimalsAndClassNames(spark: SparkSession): (DataFrame, DataFrame) = {
+/*
         val dataSchema = new StructType()
             .add("name","string")
             .add("cyr_name","string")
@@ -84,10 +84,11 @@ object Animals_Classified_with_kNN_and_splitting{
             .add("domestic", "int")
             .add("catsize", "int")
             .add("type", "double")
+*/
 
         val animals = spark.read
-            .option("inferSchema", "false")
-            .schema(dataSchema)
+            .option("inferSchema", "true") // change to false
+            //.schema(dataSchema)
             .option("charset", "windows-1251")
             .option("header", "true")
             .csv("/home/zaleslaw/data/cyr_animals.csv")

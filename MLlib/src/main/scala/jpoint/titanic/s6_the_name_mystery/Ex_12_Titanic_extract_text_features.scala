@@ -1,19 +1,20 @@
-package jpoint.titanic.s7_cross_validation
+package jpoint.titanic.s6_the_name_mystery
 
 import jpoint.titanic.s4_scaling.Ex_8_Titanic_Scaling.Printer
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.param.ParamMap
-import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
-import org.apache.spark.ml.{Pipeline, PipelineModel, Transformer}
+import org.apache.spark.ml.{Pipeline, Transformer}
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 
 /**
-  * Select features with PCA. Accuracy > 0.2 and increasing with increasing of PCA from 100 to 1000
+  * Select features with PCA. Accuracy < 0.16 and reduced with increasing of PCA from 50 to 1000
+  *
+  * Increasing amount of features with decreasing of accuracy is an example of overfit.
   */
-object Ex_13_Titanic_cross_validation {
+object Ex_12_Titanic_extract_text_features {
     def main(args: Array[String]): Unit = {
 
         //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -29,10 +30,7 @@ object Ex_13_Titanic_cross_validation {
         val passengers = readPassengers(spark)
             .select("survived", "pclass", "sibsp", "parch", "sex", "embarked", "age", "fare", "name")
 
-        val Array(training, test) = passengers.randomSplit(Array(0.7, 0.3), seed = 12345)
-
-        training.cache()
-        test.cache()
+        passengers.cache()
 
         val regexTokenizer = new RegexTokenizer()
             .setInputCol("name")
@@ -81,7 +79,7 @@ object Ex_13_Titanic_cross_validation {
 
         val pca = new PCA()
             .setInputCol("joinedFeatures")
-            .setK(100) // change on 1000
+            .setK(100)
             .setOutputCol("pcaFeatures")
 
         val trainer = new DecisionTreeClassifier()
@@ -89,34 +87,16 @@ object Ex_13_Titanic_cross_validation {
             .setFeaturesCol("pcaFeatures")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(regexTokenizer, remover, hashingTF, sexIndexer, embarkedIndexer, imputer, assembler, polyExpansion, assembler2, pca, trainer))
+            .setStages(Array(regexTokenizer, remover, hashingTF, new Printer, sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, polyExpansion, assembler2, pca, new Printer, trainer))
 
-        val paramGrid = new ParamGridBuilder()
-            .addGrid(hashingTF.numFeatures, Array(100, 500, 1000))
-            //.addGrid(imputer.strategy, Array("mean", "median"))
-            //.addGrid(polyExpansion.degree, Array(2, 3))
-            .addGrid(pca.k, Array(10, 50, 100))
-            .build()
+        val model = pipeline.fit(passengers)
+
+        val rawPredictions = model.transform(passengers)
 
         val evaluator = new MulticlassClassificationEvaluator()
             .setLabelCol("survived")
             .setPredictionCol("prediction")
             .setMetricName("accuracy")
-
-        val cv = new CrossValidator()
-            .setEstimator(pipeline)
-            .setEvaluator(evaluator)
-            .setEstimatorParamMaps(paramGrid)
-            .setNumFolds(3)
-
-        // Run cross-validation, and choose the best set of parameters.
-        val cvModel = cv.fit(training)
-
-        println("---------- The best model is ----------")
-        println("Num of features " + cvModel.bestModel.asInstanceOf[PipelineModel].stages(2).asInstanceOf[HashingTF].getNumFeatures)
-        println("Amount of components in PCA " + cvModel.bestModel.asInstanceOf[PipelineModel].stages(9).asInstanceOf[PCAModel].getK)
-
-        val rawPredictions = cvModel.transform(test)
 
         val accuracy = evaluator.evaluate(rawPredictions)
         println("Test Error = " + (1.0 - accuracy))

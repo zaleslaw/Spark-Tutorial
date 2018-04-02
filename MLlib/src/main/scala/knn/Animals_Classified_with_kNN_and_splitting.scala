@@ -1,6 +1,6 @@
-package jpoint.knn
+package knn
 
-import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier, KNNClassificationModel, KNNClassifier}
+import org.apache.spark.ml.classification.KNNClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.types.StructType
@@ -9,7 +9,7 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 /**
   * This kNN algorithm has the best prediction. On the same dataset, of course
   */
-object Animals_Classified_with_kNN {
+object Animals_Classified_with_kNN_and_splitting{
     def main(args: Array[String]): Unit = {
 
         //For windows only: don't forget to put winutils.exe to c:/bin folder
@@ -35,7 +35,7 @@ object Animals_Classified_with_kNN {
 
         val knn = new KNNClassifier()
             .setTopTreeSize(3)
-            .setK(1)
+            .setK(3)
             .setLabelCol("type")
             .setFeaturesCol("features")
 
