@@ -5,44 +5,34 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 /**
-  * Add polynomial features. Accuracy = 0.1795. Not so good, but maybe we can choose a subset of best features?
+  * Add polynomial features. Accuracy = 0.1719. Not so good, but maybe we can choose a subset of best features?
   */
 object Ex_9_Titanic_add_polinomial_features{
     def main(args: Array[String]): Unit = {
 
-        //For windows only: don't forget to put winutils.exe to c:/bin folder
-        System.setProperty("hadoop.home.dir", "c:\\")
+        val spark: SparkSession = TitanicUtils.getSparkSession
 
-        val spark = SparkSession.builder
-            .master("local")
-            .appName("Spark_SQL")
-            .getOrCreate()
-
-        spark.sparkContext.setLogLevel("ERROR")
-
-        val passengers = readPassengers(spark)
+        val passengers = TitanicUtils.readPassengersWithCasting(spark)
             .select("survived", "pclass", "sibsp", "parch", "sex", "embarked", "age", "fare")
 
         val sexIndexer = new StringIndexer()
             .setInputCol("sex")
             .setOutputCol("sexIndexed")
-            .setHandleInvalid("keep") // special mode to create special double value for null values
+            .setHandleInvalid("keep")
 
         val embarkedIndexer = new StringIndexer()
             .setInputCol("embarked")
             .setOutputCol("embarkedIndexed")
-            .setHandleInvalid("keep") // special mode to create special double value for null values
+            .setHandleInvalid("keep")
 
-        // Step - 1: Define default values for missing data
         val imputer = new Imputer()
             .setInputCols(Array("pclass", "sibsp", "parch", "age", "fare", "sexIndexed", "embarkedIndexed"))
             .setOutputCols(Array("pclass", "sibsp", "parch", "age", "fare", "sexIndexed", "embarkedIndexed").map(c => s"${c}_imputed"))
             .setStrategy("mean")
 
-        // Step - 2: Make Vectors from dataframe's columns using special Vector Assmebler
         val assembler = new VectorAssembler()
             .setInputCols(Array("pclass_imputed", "sibsp_imputed", "parch_imputed", "age_imputed", "fare_imputed", "sexIndexed_imputed", "embarkedIndexed_imputed"))
             .setOutputCol("features")
@@ -52,12 +42,22 @@ object Ex_9_Titanic_add_polinomial_features{
             .setOutputCol("polyFeatures")
             .setDegree(2)
 
+        val scaler = new MinMaxScaler()
+            .setInputCol("polyFeatures")
+            .setOutputCol("scaled_features")
+
+        val normalizer = new Normalizer()
+            .setInputCol("scaled_features")
+            .setOutputCol("norm_features")
+            .setP(1.0)
+
         val trainer = new DecisionTreeClassifier()
             .setLabelCol("survived")
-            .setFeaturesCol("polyFeatures")
+            .setFeaturesCol("norm_features")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(sexIndexer, embarkedIndexer, new TitanicUtils.DropSex, imputer, assembler, polyExpansion, new TitanicUtils.Printer, trainer))
+            .setStages(Array(sexIndexer, embarkedIndexer, imputer, assembler, polyExpansion,
+                scaler, normalizer, new TitanicUtils.Printer, trainer))
 
         val model = pipeline.fit(passengers)
 
@@ -70,30 +70,5 @@ object Ex_9_Titanic_add_polinomial_features{
 
         val accuracy = evaluator.evaluate(rawPredictions)
         println("Test Error = " + (1.0 - accuracy))
-    }
-
-    def readPassengers(spark: SparkSession): DataFrame = {
-        val passengers = spark.read
-            .option("delimiter", ";")
-            .option("inferSchema", "true")
-            .option("header", "true")
-            .csv("/home/zaleslaw/data/titanic.csv")
-
-        import org.apache.spark.sql
-        import spark.implicits._
-
-        val castedPassengers = passengers
-            .withColumn("survived", $"survived".cast(sql.types.DoubleType))
-            .withColumn("pclass", $"pclass".cast(sql.types.DoubleType))
-            .withColumn("sibsp", $"sibsp".cast(sql.types.DoubleType))
-            .withColumn("parch", $"parch".cast(sql.types.DoubleType))
-            .withColumn("age", $"age".cast(sql.types.DoubleType))
-            .withColumn("fare", $"fare".cast(sql.types.DoubleType))
-
-        castedPassengers.printSchema()
-
-        castedPassengers.show()
-
-        castedPassengers
     }
 }

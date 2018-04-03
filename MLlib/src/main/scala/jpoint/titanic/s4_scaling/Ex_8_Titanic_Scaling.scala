@@ -8,7 +8,7 @@ import org.apache.spark.ml.feature._
 import org.apache.spark.sql.SparkSession
 
 /**
-  * Add Scaler and Normalizer power. Accuracy = 0.177
+  * Add Scaler and Normalizer power. Accuracy = 0.1734
   * <p>
   * Q: How to print out intermediate results?
   * <p>
@@ -48,14 +48,14 @@ object Ex_8_Titanic_Scaling {
         val normalizer = new Normalizer()
             .setInputCol("unnorm_features")
             .setOutputCol("features")
-            .setP(2.0)
+            .setP(1.0)
 
         val trainer = new DecisionTreeClassifier()
             .setLabelCol("survived")
             .setFeaturesCol("features")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(sexIndexer, embarkedIndexer, new TitanicUtils.DropSex, imputer, assembler, scaler, normalizer, new TitanicUtils.Printer, trainer))
+            .setStages(Array(sexIndexer, embarkedIndexer, imputer, assembler, scaler, normalizer, new TitanicUtils.Printer, trainer))
 
         val model = pipeline.fit(passengers)
 

@@ -5,30 +5,24 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 /**
-  * Select features with PCA. Accuracy < 0.16 and reduced with increasing of PCA from 50 to 1000
-  *
+  * Let's extract text features from "name" column. Divide each string on separate "names" and build hashingTF model
+  * <p>
+  * Remove stop words with StopWordsRemover
+  * <p>
+  * Select features with PCA. Accuracy = 0.1428 and reduced with increasing of PCA from 50 to 1000
+  * <p>
   * Increasing amount of features with decreasing of accuracy is an example of overfit.
   */
 object Ex_12_Titanic_extract_text_features {
     def main(args: Array[String]): Unit = {
 
-        //For windows only: don't forget to put winutils.exe to c:/bin folder
-        System.setProperty("hadoop.home.dir", "c:\\")
+        val spark: SparkSession = TitanicUtils.getSparkSession
 
-        val spark = SparkSession.builder
-            .master("local")
-            .appName("Spark_SQL")
-            .getOrCreate()
-
-        spark.sparkContext.setLogLevel("ERROR")
-
-        val passengers = readPassengers(spark)
+        val passengers = TitanicUtils.readPassengersWithCasting(spark)
             .select("survived", "pclass", "sibsp", "parch", "sex", "embarked", "age", "fare", "name")
-
-        passengers.cache()
 
         val regexTokenizer = new RegexTokenizer()
             .setInputCol("name")
@@ -48,20 +42,18 @@ object Ex_12_Titanic_extract_text_features {
         val sexIndexer = new StringIndexer()
             .setInputCol("sex")
             .setOutputCol("sexIndexed")
-            .setHandleInvalid("keep") // special mode to create special double value for null values
+            .setHandleInvalid("keep")
 
         val embarkedIndexer = new StringIndexer()
             .setInputCol("embarked")
             .setOutputCol("embarkedIndexed")
-            .setHandleInvalid("keep") // special mode to create special double value for null values
+            .setHandleInvalid("keep")
 
-        // Step - 1: Define default values for missing data
         val imputer = new Imputer()
             .setInputCols(Array("pclass", "sibsp", "parch", "age", "fare", "sexIndexed", "embarkedIndexed"))
             .setOutputCols(Array("pclass", "sibsp", "parch", "age", "fare", "sexIndexed", "embarkedIndexed").map(c => s"${c}_imputed"))
             .setStrategy("mean")
 
-        // Step - 2: Make Vectors from dataframe's columns using special Vector Assmebler
         val assembler = new VectorAssembler()
             .setInputCols(Array("pclass_imputed", "sibsp_imputed", "parch_imputed", "age_imputed", "fare_imputed", "sexIndexed_imputed", "embarkedIndexed_imputed"))
             .setOutputCol("features")
@@ -71,6 +63,7 @@ object Ex_12_Titanic_extract_text_features {
             .setOutputCol("polyFeatures")
             .setDegree(2)
 
+        // We should join together text features and number features into one vector
         val assembler2 = new VectorAssembler()
             .setInputCols(Array("polyFeatures", "text_features"))
             .setOutputCol("joinedFeatures")
@@ -86,7 +79,7 @@ object Ex_12_Titanic_extract_text_features {
 
         val pipeline:Pipeline = new Pipeline()
             .setStages(Array(regexTokenizer, remover, hashingTF, new TitanicUtils.Printer, sexIndexer, embarkedIndexer,
-                new TitanicUtils.DropSex, imputer, assembler, polyExpansion, assembler2, pca, new TitanicUtils.Printer, trainer))
+                imputer, assembler, polyExpansion, assembler2, pca, new TitanicUtils.Printer, trainer))
 
         val model = pipeline.fit(passengers)
 
@@ -99,30 +92,5 @@ object Ex_12_Titanic_extract_text_features {
 
         val accuracy = evaluator.evaluate(rawPredictions)
         println("Test Error = " + (1.0 - accuracy))
-    }
-
-    def readPassengers(spark: SparkSession): DataFrame = {
-        val passengers = spark.read
-            .option("delimiter", ";")
-            .option("inferSchema", "true")
-            .option("header", "true")
-            .csv("/home/zaleslaw/data/titanic.csv")
-
-        import org.apache.spark.sql
-        import spark.implicits._
-
-        val castedPassengers = passengers
-            .withColumn("survived", $"survived".cast(sql.types.DoubleType))
-            .withColumn("pclass", $"pclass".cast(sql.types.DoubleType))
-            .withColumn("sibsp", $"sibsp".cast(sql.types.DoubleType))
-            .withColumn("parch", $"parch".cast(sql.types.DoubleType))
-            .withColumn("age", $"age".cast(sql.types.DoubleType))
-            .withColumn("fare", $"fare".cast(sql.types.DoubleType))
-
-        castedPassengers.printSchema()
-
-        castedPassengers.show(false)
-
-        castedPassengers
     }
 }

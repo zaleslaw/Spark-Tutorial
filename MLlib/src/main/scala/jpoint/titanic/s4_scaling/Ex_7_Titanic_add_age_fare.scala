@@ -1,13 +1,11 @@
 package jpoint.titanic.s4_scaling
 
 import jpoint.titanic.TitanicUtils
+import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{Imputer, StringIndexer, VectorAssembler}
-import org.apache.spark.ml.param.ParamMap
-import org.apache.spark.ml.{Pipeline, Transformer}
-import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 /**
   * Add two features: age and fare. Accuracy = 0.174942
@@ -44,7 +42,7 @@ object Ex_7_Titanic_add_age_fare {
             .setFeaturesCol("features")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(sexIndexer, embarkedIndexer, new TitanicUtils.DropSex, imputer, assembler, trainer))
+            .setStages(Array(sexIndexer, embarkedIndexer, imputer, assembler, trainer))
 
         val model = pipeline.fit(passengers)
 

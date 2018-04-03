@@ -5,25 +5,17 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.KNNClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 /**
-  * Select features with PCA. Accuracy = 0.10 !!!! Let's use kNN
+  * Select features with PCA. Accuracy = 0.107 !!!! Let's use kNN
   */
 object Ex_11_Titanic_knn_magic {
     def main(args: Array[String]): Unit = {
 
-        //For windows only: don't forget to put winutils.exe to c:/bin folder
-        System.setProperty("hadoop.home.dir", "c:\\")
+        val spark: SparkSession = TitanicUtils.getSparkSession
 
-        val spark = SparkSession.builder
-            .master("local")
-            .appName("Spark_SQL")
-            .getOrCreate()
-
-        spark.sparkContext.setLogLevel("ERROR")
-
-        val passengers = readPassengers(spark)
+        val passengers = TitanicUtils.readPassengersWithCasting(spark)
             .select("survived", "pclass", "sibsp", "parch", "sex", "embarked", "age", "fare")
 
         val sexIndexer = new StringIndexer()
@@ -54,7 +46,7 @@ object Ex_11_Titanic_knn_magic {
 
         val pca = new PCA()
             .setInputCol("polyFeatures")
-            .setK(10)
+            .setK(15)
             .setOutputCol("pcaFeatures")
 
         val trainer = new KNNClassifier()
@@ -64,7 +56,7 @@ object Ex_11_Titanic_knn_magic {
             .setFeaturesCol("pcaFeatures")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(sexIndexer, embarkedIndexer, new TitanicUtils.DropSex, imputer, assembler, polyExpansion, pca, new TitanicUtils.Printer, trainer))
+            .setStages(Array(sexIndexer, embarkedIndexer, imputer, assembler, polyExpansion, pca, new TitanicUtils.Printer, trainer))
 
         val model = pipeline.fit(passengers)
 
@@ -77,30 +69,5 @@ object Ex_11_Titanic_knn_magic {
 
         val accuracy = evaluator.evaluate(rawPredictions)
         println("Test Error = " + (1.0 - accuracy))
-    }
-
-    def readPassengers(spark: SparkSession): DataFrame = {
-        val passengers = spark.read
-            .option("delimiter", ";")
-            .option("inferSchema", "true")
-            .option("header", "true")
-            .csv("/home/zaleslaw/data/titanic.csv")
-
-        import org.apache.spark.sql
-        import spark.implicits._
-
-        val castedPassengers = passengers
-            .withColumn("survived", $"survived".cast(sql.types.DoubleType))
-            .withColumn("pclass", $"pclass".cast(sql.types.DoubleType))
-            .withColumn("sibsp", $"sibsp".cast(sql.types.DoubleType))
-            .withColumn("parch", $"parch".cast(sql.types.DoubleType))
-            .withColumn("age", $"age".cast(sql.types.DoubleType))
-            .withColumn("fare", $"fare".cast(sql.types.DoubleType))
-
-        castedPassengers.printSchema()
-
-        castedPassengers.show()
-
-        castedPassengers
     }
 }
