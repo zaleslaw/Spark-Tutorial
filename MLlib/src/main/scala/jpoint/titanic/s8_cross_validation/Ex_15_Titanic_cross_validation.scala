@@ -12,6 +12,8 @@ import org.apache.spark.sql.SparkSession
 /**
   * First of all, this example use different set of parameters to find the best model (pipeline).
   * In the second, it includes K-fold cross-validation on train dataset to get
+  *
+  * Accuracy ~ 0,2
   */
 object Ex_15_Titanic_cross_validation {
     def main(args: Array[String]): Unit = {
