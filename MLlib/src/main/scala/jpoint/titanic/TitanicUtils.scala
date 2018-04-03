@@ -82,7 +82,6 @@ object TitanicUtils {
         castedPassengers
     }
 
-
     class DropSex extends Transformer {
         private val serialVersionUID = 5545470640951989469L
 
@@ -93,6 +92,26 @@ object TitanicUtils {
             result.show()
             result.printSchema()
             result
+        }
+
+        override def copy(
+            extra: ParamMap): Transformer = null
+
+        override def transformSchema(
+            schema: StructType): StructType = schema
+
+        override val uid: String = "CustomTransformer" + serialVersionUID
+    }
+
+    class Printer extends Transformer {
+        private val serialVersionUID = 3345470640951989469L
+
+        override def transform(
+            dataset: Dataset[_]): DataFrame = {
+            println(">>>>>>>>>> Printer output")
+            dataset.show(false)
+            dataset.printSchema()
+            dataset.toDF()
         }
 
         override def copy(

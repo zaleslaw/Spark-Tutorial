@@ -1,6 +1,6 @@
 package jpoint.titanic.s6_the_name_mystery
 
-import jpoint.titanic.s4_scaling.Ex_8_Titanic_Scaling.Printer
+import jpoint.titanic.TitanicUtils
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
@@ -88,7 +88,8 @@ object Ex_13_Titanic_split_test_train_data {
             .setFeaturesCol("pcaFeatures")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(regexTokenizer, remover, hashingTF, new Printer, sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, polyExpansion, assembler2, pca, new Printer, trainer))
+            .setStages(Array(regexTokenizer, remover, hashingTF, new TitanicUtils.Printer, sexIndexer, embarkedIndexer,
+                new DropSex, imputer, assembler, polyExpansion, assembler2, pca, new TitanicUtils.Printer, trainer))
 
         val model = pipeline.fit(training)
 

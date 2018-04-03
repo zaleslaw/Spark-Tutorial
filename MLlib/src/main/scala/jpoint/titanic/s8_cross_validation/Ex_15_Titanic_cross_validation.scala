@@ -3,11 +3,9 @@ package jpoint.titanic.s8_cross_validation
 import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
-import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.tuning.{CrossValidator, ParamGridBuilder}
-import org.apache.spark.ml.{Pipeline, PipelineModel, Transformer}
-import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
   * Select features with PCA. Accuracy > 0.2 and increasing with increasing of PCA from 100 to 1000
@@ -113,7 +111,7 @@ object Ex_15_Titanic_cross_validation {
         // Run cross-validation, and choose the best set of parameters.
         val cvModel = cv.fit(training)
 
-        println("---------- The best model is ----------")
+        println("---------- The best model's parameters are ----------")
         println("Num of features " + cvModel.bestModel.asInstanceOf[PipelineModel].stages(2).asInstanceOf[HashingTF].getNumFeatures)
         println("Amount of components in PCA " + cvModel.bestModel.asInstanceOf[PipelineModel].stages(9).asInstanceOf[PCAModel].getK)
 
@@ -146,25 +144,5 @@ object Ex_15_Titanic_cross_validation {
         castedPassengers.show(false)
 
         castedPassengers
-    }
-
-    class DropSex extends Transformer {
-        private val serialVersionUID = 5545470640951989469L
-
-        override def transform(
-            dataset: Dataset[_]): DataFrame = {
-            val result = dataset.drop("sex", "embarked") // <============== drop columns to use Imputer
-            result.show()
-            result.printSchema()
-            result
-        }
-
-        override def copy(
-            extra: ParamMap): Transformer = null
-
-        override def transformSchema(
-            schema: StructType): StructType = schema
-
-        override val uid: String = "CustomTransformer" + serialVersionUID
     }
 }

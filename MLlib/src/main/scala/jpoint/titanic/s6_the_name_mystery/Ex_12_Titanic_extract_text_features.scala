@@ -1,13 +1,11 @@
 package jpoint.titanic.s6_the_name_mystery
 
-import jpoint.titanic.s4_scaling.Ex_8_Titanic_Scaling.Printer
+import jpoint.titanic.TitanicUtils
+import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
-import org.apache.spark.ml.param.ParamMap
-import org.apache.spark.ml.{Pipeline, Transformer}
-import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
   * Select features with PCA. Accuracy < 0.16 and reduced with increasing of PCA from 50 to 1000
@@ -87,7 +85,8 @@ object Ex_12_Titanic_extract_text_features {
             .setFeaturesCol("pcaFeatures")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(regexTokenizer, remover, hashingTF, new Printer, sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, polyExpansion, assembler2, pca, new Printer, trainer))
+            .setStages(Array(regexTokenizer, remover, hashingTF, new TitanicUtils.Printer, sexIndexer, embarkedIndexer,
+                new TitanicUtils.DropSex, imputer, assembler, polyExpansion, assembler2, pca, new TitanicUtils.Printer, trainer))
 
         val model = pipeline.fit(passengers)
 
@@ -125,25 +124,5 @@ object Ex_12_Titanic_extract_text_features {
         castedPassengers.show(false)
 
         castedPassengers
-    }
-
-    class DropSex extends Transformer {
-        private val serialVersionUID = 5545470640951989469L
-
-        override def transform(
-            dataset: Dataset[_]): DataFrame = {
-            val result = dataset.drop("sex", "embarked") // <============== drop columns to use Imputer
-            result.show()
-            result.printSchema()
-            result
-        }
-
-        override def copy(
-            extra: ParamMap): Transformer = null
-
-        override def transformSchema(
-            schema: StructType): StructType = schema
-
-        override val uid: String = "CustomTransformer" + serialVersionUID
     }
 }

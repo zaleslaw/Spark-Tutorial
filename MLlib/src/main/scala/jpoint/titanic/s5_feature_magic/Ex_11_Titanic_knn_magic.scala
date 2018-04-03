@@ -1,13 +1,11 @@
 package jpoint.titanic.s5_feature_magic
 
-import jpoint.titanic.s4_scaling.Ex_8_Titanic_Scaling.Printer
-import org.apache.spark.ml.classification.{DecisionTreeClassifier, KNNClassifier}
+import jpoint.titanic.TitanicUtils
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.classification.KNNClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
-import org.apache.spark.ml.param.ParamMap
-import org.apache.spark.ml.{Pipeline, Transformer}
-import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
   * Select features with PCA. Accuracy = 0.10 !!!! Let's use kNN
@@ -66,7 +64,7 @@ object Ex_11_Titanic_knn_magic {
             .setFeaturesCol("pcaFeatures")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, polyExpansion, pca, new Printer, trainer))
+            .setStages(Array(sexIndexer, embarkedIndexer, new TitanicUtils.DropSex, imputer, assembler, polyExpansion, pca, new TitanicUtils.Printer, trainer))
 
         val model = pipeline.fit(passengers)
 
@@ -104,25 +102,5 @@ object Ex_11_Titanic_knn_magic {
         castedPassengers.show()
 
         castedPassengers
-    }
-
-    class DropSex extends Transformer {
-        private val serialVersionUID = 5545470640951989469L
-
-        override def transform(
-            dataset: Dataset[_]): DataFrame = {
-            val result = dataset.drop("sex", "embarked") // <============== drop columns to use Imputer
-            result.show()
-            result.printSchema()
-            result
-        }
-
-        override def copy(
-            extra: ParamMap): Transformer = null
-
-        override def transformSchema(
-            schema: StructType): StructType = schema
-
-        override val uid: String = "CustomTransformer" + serialVersionUID
     }
 }

@@ -1,13 +1,11 @@
 package jpoint.titanic.s5_feature_magic
 
-import jpoint.titanic.s4_scaling.Ex_8_Titanic_Scaling.Printer
+import jpoint.titanic.TitanicUtils
+import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature._
-import org.apache.spark.ml.param.ParamMap
-import org.apache.spark.ml.{Pipeline, Transformer}
-import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /**
   * Add polynomial features. Accuracy = 0.1795. Not so good, but maybe we can choose a subset of best features?
@@ -59,7 +57,7 @@ object Ex_9_Titanic_add_polinomial_features{
             .setFeaturesCol("polyFeatures")
 
         val pipeline:Pipeline = new Pipeline()
-            .setStages(Array(sexIndexer, embarkedIndexer, new DropSex, imputer, assembler, polyExpansion, new Printer, trainer))
+            .setStages(Array(sexIndexer, embarkedIndexer, new TitanicUtils.DropSex, imputer, assembler, polyExpansion, new TitanicUtils.Printer, trainer))
 
         val model = pipeline.fit(passengers)
 
@@ -97,25 +95,5 @@ object Ex_9_Titanic_add_polinomial_features{
         castedPassengers.show()
 
         castedPassengers
-    }
-
-    class DropSex extends Transformer {
-        private val serialVersionUID = 5545470640951989469L
-
-        override def transform(
-            dataset: Dataset[_]): DataFrame = {
-            val result = dataset.drop("sex", "embarked") // <============== drop columns to use Imputer
-            result.show()
-            result.printSchema()
-            result
-        }
-
-        override def copy(
-            extra: ParamMap): Transformer = null
-
-        override def transformSchema(
-            schema: StructType): StructType = schema
-
-        override val uid: String = "CustomTransformer" + serialVersionUID
     }
 }
