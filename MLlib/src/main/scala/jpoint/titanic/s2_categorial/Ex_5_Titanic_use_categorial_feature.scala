@@ -4,7 +4,7 @@ import jpoint.titanic.TitanicUtils
 import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.{Imputer, StringIndexer, VectorAssembler}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 /**
   * Add two features: "sex" and "embarked". They are presented as sets of string. Accuracy = 0,194
@@ -38,7 +38,7 @@ object Ex_5_Titanic_use_categorial_feature {
         val passengersWithIndexedCategorialFeatures = embarkedIndexer
             .fit(passengersWithIndexedSex)
             .transform(passengersWithIndexedSex)
-           .drop("sex", "embarked") // <============== drop columns to use Imputer
+            .drop("sex", "embarked") // <============== drop columns to use Imputer
 
         passengersWithIndexedCategorialFeatures.show()
         passengersWithIndexedCategorialFeatures.printSchema()
