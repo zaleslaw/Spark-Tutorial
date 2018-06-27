@@ -66,7 +66,7 @@ object Step_3_Make_prediction {
     val model = pipeline.fit(train)
 
     val rawPredictions = model.transform(train)
-    rawPredictions.show(100)
+    rawPredictions.show(100, truncate = false)
 
     val evaluator = new MulticlassClassificationEvaluator()
       .setLabelCol("label")
@@ -81,9 +81,26 @@ object Step_3_Make_prediction {
     testPrediction.cache()
     testPrediction.show(100, truncate = false)
 
-    testPrediction.select("probability").write.text("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\result.txt")
 
-    //println("Learned classification tree model:\n" + model.toString())
+
+
+    import org.apache.spark.mllib.linalg.Vector
+    import org.apache.spark.sql.functions.udf
+
+
+    val first = udf((v: org.apache.spark.ml.linalg.Vector) => v.toArray(0))
+    val second = udf((v: org.apache.spark.ml.linalg.Vector) => v.toArray(1))
+    testPrediction
+      //.withColumn("prob1", first($"probability"))
+      .withColumn("prob2", second($"probability"))
+      .drop("probability")
+      .select("id", "prob2")
+      .withColumn("prob2", $"prob2".cast(sql.types.StringType))
+      .coalesce(1)
+      .write
+      .csv("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\result")
+
+
   }
 
   private def getSession = {
