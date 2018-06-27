@@ -98,6 +98,7 @@ object Step_3_Make_prediction {
       .withColumn("prob2", $"prob2".cast(sql.types.StringType))
       .coalesce(1)
       .write
+      .mode("overwrite")
       .csv("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\result")
 
 
