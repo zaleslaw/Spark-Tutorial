@@ -1,9 +1,6 @@
 package bootcamp
 
-import org.apache.spark.ml.classification.LinearSVC
-import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
-import org.apache.spark.ml.feature.VectorAssembler
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 
 object Step_1_FilterAndToParquet {
@@ -24,7 +21,7 @@ object Step_1_FilterAndToParquet {
     val data = spark.read
       .option("charset", "windows-1251")
       .option("delimiter", "\t")
-      .csv("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\mlboot_data.tsv")
+      .csv("C:\\home\\bootcamp\\mlboot_data.tsv")
 
 
 
@@ -35,6 +32,6 @@ object Step_1_FilterAndToParquet {
     data
       .select($"_c0".as("id"), $"_c1".as("type"), $"_c5".as("diff"))
       .write
-      .parquet("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\parquet")
+      .parquet("C:\\home\\bootcamp\\parquet")
   }
 }

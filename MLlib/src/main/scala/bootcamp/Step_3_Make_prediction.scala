@@ -1,7 +1,7 @@
 package bootcamp
 
 import org.apache.spark.ml.Pipeline
-import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, DecisionTreeClassifier}
+import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql
@@ -16,29 +16,28 @@ object Step_3_Make_prediction {
     val trainRaw = spark.read
       .option("inferSchema", "true")
       .option("header", "true")
-      .parquet("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\train")
+      .parquet("C:\\home\\bootcamp\\train")
       .withColumn("type", $"type".cast(sql.types.IntegerType))
       .withColumn("diff", $"diff".cast(sql.types.IntegerType))
       .withColumn("target", $"target".cast(sql.types.IntegerType))
 
-    trainRaw.cache()
-    trainRaw.show(false)
-
     val testRaw = spark.read
       .option("inferSchema", "true")
       .option("header", "true")
-      .parquet("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\test")
+      .parquet("C:\\home\\bootcamp\\test")
       .withColumn("type", $"type".cast(sql.types.IntegerType))
       .withColumn("diff", $"diff".cast(sql.types.IntegerType))
-
-    testRaw.cache()
-    testRaw.show(false)
 
     import org.apache.spark.sql.functions._
 
     val preTrain = trainRaw
       .groupBy("id")
-      .agg(max("type") as "max_type", max("target") as "label", max("diff") as "max_diff", avg("diff") as "avg_diff", count("id") as "amount_of_records")
+      .agg(max("type") as "max_type",
+        max("target") as "label",
+        max("diff") as "max_diff",
+        avg("diff") as "avg_diff",
+        sum("diff") as "sum_diff",
+        count("id") as "amount_of_records")
 // add select
 
     val train = preTrain.filter("label == 0").sample(false, 0.05, 1234L).union(preTrain.filter("label == 1"))
@@ -48,14 +47,19 @@ object Step_3_Make_prediction {
 
     val test = testRaw
       .groupBy("id")
-      .agg(max("type") as "max_type", max("diff") as "max_diff", avg("diff") as "avg_diff", count("id") as "amount_of_records")
+      .agg(max("type") as "max_type",
+        max("diff") as "max_diff",
+        avg("diff") as "avg_diff",
+        sum("diff") as "sum_diff",
+        count("id") as "amount_of_records")
 // add select
 
     val assembler = new VectorAssembler()
-      .setInputCols(Array("max_type", "max_diff", "avg_diff", "amount_of_records"))
+      .setInputCols(Array("max_diff", "sum_diff"))
       .setOutputCol("features")
 
     val trainer = new DecisionTreeClassifier()
+        .setMaxDepth(4)
       .setLabelCol("label")
       .setFeaturesCol("features")
 
@@ -82,9 +86,6 @@ object Step_3_Make_prediction {
     testPrediction.show(100, truncate = false)
 
 
-
-
-    import org.apache.spark.mllib.linalg.Vector
     import org.apache.spark.sql.functions.udf
 
 
@@ -99,7 +100,7 @@ object Step_3_Make_prediction {
       .coalesce(1)
       .write
       .mode("overwrite")
-      .csv("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\result")
+      .csv("C:\\home\\bootcamp\\result_0")
 
 
   }
@@ -111,7 +112,7 @@ object Step_3_Make_prediction {
     val spark = SparkSession.builder
       .master("local")
       .appName("Spark_SQL")
-      .config("spark.executor.memory", "2g")
+      .config("spark.executor.memory", "4g")
       .config("spark.cores.max", "4")
       .getOrCreate()
 

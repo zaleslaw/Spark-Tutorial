@@ -9,7 +9,7 @@ object Step_2_Create_Test_Train_Set {
     val data = spark.read
       .option("inferSchema", "true")
       .option("header", "true")
-      .parquet("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\parquet")
+      .parquet("C:\\home\\bootcamp\\parquet")
 
     data.cache()
     data.show(false)
@@ -18,13 +18,13 @@ object Step_2_Create_Test_Train_Set {
       .option("inferSchema", "true")
       .option("header", "true")
       .option("delimiter", "\t")
-      .csv("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\mlboot_train_answers.tsv")
+      .csv("C:\\home\\bootcamp\\mlboot_train_answers.tsv")
 
     val testIds = spark.read
       .option("inferSchema", "true")
       .option("header", "true")
       .option("delimiter", "\t")
-      .csv("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\mlboot_test.tsv")
+      .csv("C:\\home\\bootcamp\\mlboot_test.tsv")
 
     val trainSet = data.join(trainAnswers, data.col("id").equalTo(trainAnswers.col("cuid")))
     trainSet.cache()
@@ -33,7 +33,7 @@ object Step_2_Create_Test_Train_Set {
     trainSet
       .select("id", "type", "diff", "target")
       .write
-      .parquet("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\train")
+      .parquet("C:\\home\\bootcamp\\train")
 
     val testSet = data.join(testIds, data.col("id").equalTo(testIds.col("cuid")))
     testSet.cache()
@@ -42,7 +42,7 @@ object Step_2_Create_Test_Train_Set {
     testSet
       .select("id", "type", "diff")
       .write
-      .parquet("C:\\Users\\alexey_zinovyev\\Downloads\\mlboot_dataset\\test")
+      .parquet("C:\\home\\bootcamp\\test")
   }
 
   private def getSession = {
