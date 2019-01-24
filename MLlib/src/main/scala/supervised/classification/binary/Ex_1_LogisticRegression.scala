@@ -1,7 +1,7 @@
 package supervised.classification.binary
 
 import org.apache.spark.ml.classification.{BinaryLogisticRegressionSummary, LogisticRegression}
-import org.apache.spark.ml.evaluation.{BinaryClassificationEvaluator, MulticlassClassificationEvaluator}
+import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
 import org.apache.spark.sql.SparkSession
 
@@ -21,6 +21,7 @@ object Ex_1_LogisticRegression {
     val mushrooms = spark.read
       .option("inferSchema", "true")
       .option("header", "true")
+
       .csv("/home/zaleslaw/data/mushrooms.csv")
 
     mushrooms.show()
@@ -122,8 +123,8 @@ object Ex_1_LogisticRegression {
     roc.show()
     println(s"areaUnderROC: ${binarySummary.areaUnderROC}")
 
-    import spark.implicits._
     import org.apache.spark.sql.functions._
+    import spark.implicits._
     // Set the model threshold to maximize F-Measure
     val fMeasure = binarySummary.fMeasureByThreshold
     val maxFMeasure = fMeasure.select(max("F-Measure")).head().getDouble(0)

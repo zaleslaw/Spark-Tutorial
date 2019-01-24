@@ -1,4 +1,4 @@
-package ReadWrite
+package RW
 
 import org.apache.spark.ml.clustering.KMeans
 import org.apache.spark.ml.feature.VectorAssembler

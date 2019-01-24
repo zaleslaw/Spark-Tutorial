@@ -78,7 +78,5 @@ object Ex_1_KMeans {
       .select("name", "type")
       .groupBy("type")
       .agg(collect_list("name")).show(predictions.count().toInt, false)
-
-
   }
 }
