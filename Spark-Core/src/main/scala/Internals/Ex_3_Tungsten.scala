@@ -24,7 +24,7 @@ object Ex_3_Tungsten {
     println(intRDD.persist(StorageLevel.MEMORY_ONLY).count)
 
     import spark.sqlContext.implicits._
-    println(intSeq.toDF.persist(StorageLevel.MEMORY_ONLY).count)
+    println(intRDD.toDF.persist(StorageLevel.MEMORY_ONLY).count)
     while (true) {
 
     }
