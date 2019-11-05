@@ -11,7 +11,7 @@ import org.apache.spark.sql.SparkSession
   * <p>
   * The main problem are nulls in data. Values to assemble (by VectorAssembler) cannot be null.
   */
-object Ex_9_RFReg {
+object Ex_10_GBTReg {
     def main(args: Array[String]): Unit = {
 
         val spark: SparkSession = TitanicUtils.getSparkSession
